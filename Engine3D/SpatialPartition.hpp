@@ -4,7 +4,9 @@
 #include <optional>
 #include <unordered_map>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include "Types.hpp"
 
@@ -221,11 +223,7 @@ namespace Engine3D
 
 	private:
 
-		//BAD
-		std::function<u64(const glm::vec3&)> m_hash_func = [](const glm::vec3& pos) -> u64
-		{
-			return static_cast<u64>(((s64)pos.x * 73856093) + ((s64)pos.y * 19349663) + ((s64)pos.z * 83492791));
-		};
+		std::hash<glm::vec3> m_hash_func {};
 
 		std::function<glm::vec3(const glm::vec3&)> m_world_to_cell = [this](const glm::vec3& pos) -> glm::vec3
 		{
