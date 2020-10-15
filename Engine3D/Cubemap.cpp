@@ -2,16 +2,9 @@
 
 #include "Macros.hpp"
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <SDL2/SDL_image.h>
-#include <OpenGL/glew.h>
-#else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <GL/glew.h>
-#endif
-
-#include <SDL2/SDL.h>
 
 #include "Cache.hpp"
 

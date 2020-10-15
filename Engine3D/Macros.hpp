@@ -3,8 +3,6 @@
 /**
  * define platform based on the compiler
  */
-#define XSTR(x) STR(x)
-#define STR(x) #x
 
 #define WINDOWS 0
 #define LINUX   1

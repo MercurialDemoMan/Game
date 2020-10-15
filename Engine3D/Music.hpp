@@ -2,12 +2,8 @@
 
 #include <string>
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <SDL2/SDL_mixer.h>
-#else
-#include <SDL2/SDL_mixer.h>
-#endif
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
 #include "Cache.hpp"
 

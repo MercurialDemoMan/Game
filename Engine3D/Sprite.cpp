@@ -1,13 +1,8 @@
 #include "Sprite.hpp"
 #include "Shader.hpp"
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <OpenGL/glew.h>
-#include <SDL2/SDL_ttf.h>
-#else
 #include <GL/glew.h>
 #include <SDL2/SDL_ttf.h>
-#endif
 
 #include <glm/gtc/type_ptr.hpp>
 

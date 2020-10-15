@@ -2,11 +2,7 @@
 
 #include "Macros.hpp"
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <OpenGL/glew.h>
-#else
 #include <GL/glew.h>
-#endif
 
 #include "Canvas.hpp"
 #include "Types.hpp"

@@ -2,14 +2,8 @@
 
 #include "Macros.hpp"
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <OpenGL/glew.h>
-#include <SDL2/SDL_image.h>
-#else
 #include <GL/glew.h>
 #include <SDL2/SDL_image.h>
-#endif
-
 #include <SDL2/SDL.h>
 
 

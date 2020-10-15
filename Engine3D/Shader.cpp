@@ -4,11 +4,7 @@
 
 #include "Macros.hpp"
 
-#if ENGINE3D_PLATFORM == WINDOWS
-#include <OpenGL/glew.h>
-#else
 #include <GL/glew.h>
-#endif
 
 #include <SDL2/SDL.h>
 
