@@ -1,0 +1,16 @@
+"objects" :
+{
+	{
+		"m" : "data/objects/polyland.obj",
+		"x" : 0, "y" : 15, "z" : 0,
+		"s" : 500, 
+		"t" : 4
+	},
+	
+	{
+		"m" : "data/objects/ball.obj",
+		"x" : 0, "y" : -48, "z" : -20,
+		"s" : 4,
+		"t" : 1
+	},
+}
