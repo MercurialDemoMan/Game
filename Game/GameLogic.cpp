@@ -84,6 +84,7 @@ void GameLogic::init()
 				m_objects.back()->hitbox() = object_type;
 				m_objects.back()->setupVertexAttributes(m_obj_shader);
 			});
+
 		}, "GameLogic::Engine3D_init()");
 
 	//load skybox
@@ -103,7 +104,7 @@ void GameLogic::init()
 	Engine3D::inline_try<std::runtime_error>([&]
 		{
 			m_main_music.init("data/audio/abstract.ogg");
-			m_main_music.play();
+			//m_main_music.play();
 
 			m_step_left_sound.init("data/audio/step_left.wav");
 			m_step_right_sound.init("data/audio/step_right.wav");
@@ -238,6 +239,23 @@ void GameLogic::update(const float time_delta)
 			m_player.reset();
 		}*/
 
+		m_objects.back()->pos().x += cos(m_time / 50.0f) / 5.0f;
+		m_objects.back()->pos().z += cos(m_time / 50.0f) / 5.0f;
+		m_objects.back()->pos().y += cos(m_time / 100.0f) / 5.0f;
+
+		if(Engine3D::Collision::BoxVsBox(m_objects[m_objects.size() - 1]->pos(), m_objects[m_objects.size() - 1]->dims(), m_objects[m_objects.size() - 2]->pos(), m_objects[m_objects.size() - 2]->dims()).occurred)
+		{
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 0, 0);
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0, 0);
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 0, 0);
+		}
+		else
+		{
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 1, 1);
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0.2, 0.2);
+			const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 1, 1);
+		}	
+
 		glm::vec3 collision_result(0);
 
 		//perform collision with static objects
@@ -267,7 +285,7 @@ void GameLogic::update(const float time_delta)
 					//Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBox(m_player.getPos(), m_player.dims(), object->pos(), object->dims());
 					//Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBoxSweep(m_player.getPos(), m_player.dims(), m_player.mov(), object->pos(), object->dims());
 					
-					Engine3D::Collision::Data collision_data = Engine3D::Collision::BallVsBall(m_player.getPos(), m_player.dims().x, object->pos(), object->dims().x);
+					Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBox(m_player.getPos(), m_player.dims(), object->pos(), object->dims());
 					if (collision_data.occurred)
 					{
 						//std::printf("%f, %f, %f\n", collision_data.displacement.x, collision_data.displacement.y, collision_data.displacement.z);
