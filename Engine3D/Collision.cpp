@@ -336,7 +336,7 @@ namespace Engine3D
 						   const glm::vec3& pos2, const glm::vec2& dims)
 		{
 			Data res;
-			/*
+			
 			//project the ray onto the cylinder from the top, so that we can check ray vs infinite height cylinder
 			glm::vec2 delta2D = glm::vec2(pos1.x, pos1.z) - glm::vec2(pos2.x, pos2.z);
 			glm::vec2 dir2D   = glm::vec2(dir.x, dir.z);
@@ -381,9 +381,11 @@ namespace Engine3D
 				res.occurred     = true;
 				res.displacement = dir * closest_time_horizontal;
 			}
+
 			//check if the ray hit one of the caps
 			else
 			{
+				
 				glm::vec3 top_cap_pos = pos2 - glm::vec3(0, dims.y / 2.0f, 0);
 				glm::vec3 bot_cap_pos = pos2 + glm::vec3(0, dims.y / 2.0f, 0);
 
@@ -399,7 +401,7 @@ namespace Engine3D
 							glm::vec3 top_cap_ray_delta = (pos1 + top_cap_data.displacement) - top_cap_pos;
 
 							if (glm::dot(top_cap_ray_delta, top_cap_ray_delta) <= dims.x * dims.x)
-							{CMakeFiles/Engine3D.dir/Engine3D/Collision.cpp.o
+							{
 								res = bot_cap_data;
 							}
 						}
@@ -433,7 +435,7 @@ namespace Engine3D
 					}
 				}
 			}
-			*/
+			
 			return res;
 		}
 		Data RayVsCylinder(const Ray& ray, const Cylinder& cylinder)
@@ -811,6 +813,18 @@ namespace Engine3D
 		Data EllipsoidVsTriangleSweep(const Ellipsoid& ellipsoid, const glm::vec3& velocity, const Triangle& triangle)
 		{
 			return EllipsoidVsTriangleSweep(ellipsoid.pos, ellipsoid.dims, velocity, triangle.p1, triangle.p2, triangle.p3);
+		}
+
+		Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
+								const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
+		{
+			Data res;
+
+			return res;
+		}
+		Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2)
+		{
+			return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
 		}
 	};
 };

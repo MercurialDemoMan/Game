@@ -243,7 +243,9 @@ void GameLogic::update(const float time_delta)
 		m_objects.back()->pos().z += cos(m_time / 50.0f) / 5.0f;
 		m_objects.back()->pos().y += cos(m_time / 100.0f) / 5.0f;
 
-		if(Engine3D::Collision::BoxVsBox(m_objects[m_objects.size() - 1]->pos(), m_objects[m_objects.size() - 1]->dims(), m_objects[m_objects.size() - 2]->pos(), m_objects[m_objects.size() - 2]->dims()).occurred)
+		glm::vec3 mov = glm::vec3(cos(m_time / 50.0f) / 5.0f, cos(m_time / 50.0f) / 5.0f, cos(m_time / 100.0f) / 5.0f);
+
+		if(Engine3D::Collision::BoxVsBoxSweep(m_objects[m_objects.size() - 1]->pos(), m_objects[m_objects.size() - 1]->dims(), mov, m_objects[m_objects.size() - 2]->pos(), m_objects[m_objects.size() - 2]->dims()))
 		{
 			const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 0, 0);
 			const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0, 0);

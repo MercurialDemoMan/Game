@@ -14,6 +14,8 @@ namespace Engine3D
 
 			bool      occurred     { false };
 			glm::vec3 displacement { 0 };
+
+			explicit operator bool() const { return occurred; }
 		};
 
 		/**
@@ -196,5 +198,13 @@ namespace Engine3D
 		Data EllipsoidVsTriangleSweep(const glm::vec3& pos, const glm::vec3& dims, const glm::vec3& velocity,
 							     	  const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
 		Data EllipsoidVsTriangleSweep(const Ellipsoid& ellipsoid, const glm::vec3& velocity, const Triangle& triangle);
+
+		/**
+		 * triangle vs triangle
+		 *
+		 */
+		Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
+								const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
+		Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);
 	};
 };
