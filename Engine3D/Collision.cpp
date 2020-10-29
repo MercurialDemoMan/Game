@@ -339,15 +339,17 @@ namespace Engine3D
 						   const glm::vec3& pos2, const glm::vec2& dims)
 		{
 			Data res;
+
+			std::printf("l: %f\n", glm::length(dir));
 			
 			//project the ray onto the cylinder from the top, so that we can check ray vs infinite height cylinder
 			glm::vec2 delta2D = glm::vec2(pos1.x, pos1.z) - glm::vec2(pos2.x, pos2.z);
 			glm::vec2 dir2D   = glm::vec2(dir.x, dir.z);
-			static const glm::vec3 top_cap_normal = glm::vec3(0, 1, 0);
+			static const glm::vec3 top_cap_normal = glm::vec3(0,  1, 0);
 			static const glm::vec3 bot_cap_normal = glm::vec3(0, -1, 0);
 
 			float a = glm::dot(dir2D, dir2D);
-			float b = 2.0f * glm::dot(delta2D, glm::vec2(dir.x, dir.z));
+			float b = 2.0f * (dir2D.x * delta2D.x + dir2D.y * delta2D.y);
 			float c = glm::dot(delta2D, delta2D) - dims.x * dims.x;
 
 			float d = b * b - 4.0f * a * c;
@@ -357,8 +359,8 @@ namespace Engine3D
 				return res;
 			}
 
-			float time1 = (-b - sqrtf(d)) / 2.0f;
-			float time2 = (-b + sqrtf(d)) / 2.0f;
+			float time1 = (-b - sqrtf(d)) / (2.0f * a);
+			float time2 = (-b + sqrtf(d)) / (2.0f * a);
 
 			float closest_time_horizontal = -1;
 
