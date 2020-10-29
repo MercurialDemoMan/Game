@@ -207,6 +207,9 @@ namespace Engine3D
 		 * triangle vs triangle
 		 *
 		 */
+		Ray PlaneVsPlane(const glm::vec3& pos1, const glm::vec3& nor1,
+						 const glm::vec3& pos2, const glm::vec3& nor2);
+		Ray PlaneVsPlane(const Plane& plane1, const Plane& plane2);
 		Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
 								const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
 		Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);

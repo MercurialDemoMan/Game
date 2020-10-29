@@ -12,15 +12,15 @@
  */
 void GameLogic::init()
 {
-	glm::vec3 c_pos = { 0, 0, 0 };
-	float     c_rad = 5;
-	glm::vec3 c_mov = { 10, -10, 0 };
-	glm::vec3 c_p1  = { 10, -10, 0 };
-	glm::vec3 c_p2  = { 10, 0, 0 };
-	Engine3D::Collision::Data r = Engine3D::Collision::BallVsLineSweep(c_pos, c_rad, c_mov, c_p1, c_p2);
+	glm::vec3 c_pos1 = glm::vec3(0, 0, 0);
+	glm::vec3 c_nor1 = glm::vec3(1, 0, 0);
+	glm::vec3 c_pos2 = glm::vec3(1, 0, 0);
+	glm::vec3 c_nor2 = glm::vec3(0, 0.707, 0.707);
 
-	if(r)
-		std::printf("r: %f, %f, %f\n", r.displacement.x, r.displacement.y, r.displacement.z);
+	Engine3D::Ray r = Engine3D::Collision::PlaneVsPlane(c_pos1, c_nor1, c_pos2, c_nor2);
+
+		std::printf("%f, %f, %f - %f, %f, %f\n", r.pos.x, r.pos.y, r.pos.z, r.dir.x, r.dir.y, r.dir.z);
+		//std::printf("r: %f, %f, %f\n", r.displacement.x, r.displacement.y, r.displacement.z);
 
 	this->setVSync(Engine3D::Game::VSync::On);
 

@@ -878,11 +878,83 @@ namespace Engine3D
 			return EllipsoidVsTriangleSweep(ellipsoid.pos, ellipsoid.dims, velocity, triangle.p1, triangle.p2, triangle.p3);
 		}
 
+		Ray PlaneVsPlane(const glm::vec3& pos1, const glm::vec3& nor1,
+					     const glm::vec3& pos2, const glm::vec3& nor2)
+		{
+			Ray res;
+
+			glm::vec3 n = glm::cross(nor1, nor2);
+
+			float a1 = nor1.x;
+			float b1 = nor1.y;
+			float c1 = nor1.z;
+			float d1 = nor1.x * pos1.x + nor1.y * pos1.y + nor1.z * pos1.z;
+
+			float a2 = nor2.x;
+			float b2 = nor2.y;
+			float c2 = nor2.z;
+			float d2 = nor2.x * pos2.x + nor2.y * pos2.y + nor2.z * pos2.z;
+
+			if(n.x != 0.0f)
+			{
+				res.pos = glm::vec3(0, 
+									(c2 * d1 - c1 * d2) / (b2 * c1 - b1 * c2), 
+					                (b2 * d1 - b1 * d2) / (b1 * c2 - b2 * c1)) / n.x;
+			}
+			else if(n.y != 0.0f)
+			{
+				res.pos = glm::vec3((c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2), 
+									0,
+					                (a2 * d1 - a1 * d2) / (a1 * c2 - a2 * c1)) / n.y;
+			}
+			else if(n.z != 0.0f)
+			{
+				res.pos = glm::vec3((b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1), 
+					                (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1), 
+					                0) / n.z;
+			}
+
+			res.dir = glm::normalize(n);
+
+			return res;
+		}
+		Ray PlaneVsPlane(const Plane& plane1, const Plane& plane2)
+		{
+			return PlaneVsPlane(plane1.pos, plane1.nor, plane2.pos, plane2.nor);
+		}
+
 		Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
 								const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
 		{
 			Data res;
 
+			glm::vec3 plane1_nor = glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1);
+			glm::vec3 plane2_nor = glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1);
+
+			Ray intersection_line = PlaneVsPlane(t1_p1, plane1_nor, t2_p1, plane2_nor);
+
+			bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0;
+			bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0;
+			bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0;
+
+			bool t2_p1s = glm::dot(plane2_nor, t2_p1 - intersection_line.pos) > 0;
+			bool t2_p2s = glm::dot(plane2_nor, t2_p2 - intersection_line.pos) > 0;
+			bool t2_p3s = glm::dot(plane2_nor, t2_p3 - intersection_line.pos) > 0;
+
+			if(( t1_p1s &&  t1_p2s &&  t1_p3s) ||
+			   (!t1_p1s && !t1_p2s && !t1_p3s))
+			{
+				return res;
+			}
+
+			if(( t2_p1s &&  t2_p2s &&  t2_p3s) ||
+			   (!t2_p1s && !t2_p2s && !t2_p3s))
+			{
+				return res;
+			}
+
+			res.occurred = true;
+			
 			return res;
 		}
 		Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2)
