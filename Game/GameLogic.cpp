@@ -12,14 +12,15 @@
  */
 void GameLogic::init()
 {
-    float c_off = 6;
-    glm::vec3 c_t1p1 { -10, -10, 0 };
-    glm::vec3 c_t1p2 { +10, -10, 0 };
-    glm::vec3 c_t1p3 { +10, +10, 0 };
+    float c_off = -10;
 
-    glm::vec3 c_t2p1 { -2, 0, 0 + c_off };
-    glm::vec3 c_t2p2 { 5, 0, 5 + c_off };
-    glm::vec3 c_t2p3 { 5, 0, -5 + c_off };
+    glm::vec3 c_t1p1 { -2 + c_off, 0, 0 };
+    glm::vec3 c_t1p2 { 5 + c_off, 0, 5 };
+    glm::vec3 c_t1p3 { 5 + c_off, 0, -5 };
+
+    glm::vec3 c_t2p1 { -10, -10, 0 };
+    glm::vec3 c_t2p2 { +10, -10, 0 };
+    glm::vec3 c_t2p3 { +10, +10, 0 };
 
     Engine3D::Collision::Data r = Engine3D::Collision::TriangleVsTriangle(c_t1p1, c_t1p2, c_t1p3, c_t2p1, c_t2p2, c_t2p3);
     if(r)

@@ -10,6 +10,25 @@ namespace Engine3D
 {
     namespace Collision
     {
+    	static glm::vec3 barycentric(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& p)
+        {
+            glm::vec3 d0 = b - a;
+            glm::vec3 d1 = c - a;
+
+            glm::vec3 d2 = p - a;
+            float d00 = glm::dot(d0, d0);
+            float d01 = glm::dot(d0, d1);
+            float d11 = glm::dot(d1, d1);
+            float d20 = glm::dot(d2, d0);
+            float d21 = glm::dot(d2, d1);
+            float denom = d00 * d11 - d01 * d01;
+
+            float v = (d11 * d20 - d01 * d21) / denom;
+            float w = (d00 * d21 - d01 * d20) / denom;
+
+            return glm::vec3(v, w, 1.0 - v - w);
+        }
+
         /**
          * box vs box
          *
@@ -339,8 +358,6 @@ namespace Engine3D
                            const glm::vec3& pos2, const glm::vec2& dims)
         {
             Data res;
-
-            std::printf("l: %f\n", glm::length(dir));
             
             //project the ray onto the cylinder from the top, so that we can check ray vs infinite height cylinder
             glm::vec2 delta2D = glm::vec2(pos1.x, pos1.z) - glm::vec2(pos2.x, pos2.z);
@@ -678,26 +695,6 @@ namespace Engine3D
         {
             Data res;
 
-            //calculate barycentric coordinates
-            auto barycentric = [](const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& p) -> glm::vec3
-            {
-                glm::vec3 d0 = b - a;
-                glm::vec3 d1 = c - a;
-
-                glm::vec3 d2 = p - a;
-                float d00 = glm::dot(d0, d0);
-                float d01 = glm::dot(d0, d1);
-                float d11 = glm::dot(d1, d1);
-                float d20 = glm::dot(d2, d0);
-                float d21 = glm::dot(d2, d1);
-                float denom = d00 * d11 - d01 * d01;
-
-                float v = (d11 * d20 - d01 * d21) / denom;
-                float w = (d00 * d21 - d01 * d20) / denom;
-
-                return glm::vec3(v, w, 1.0 - v - w);
-            };
-
             glm::vec3 bar = barycentric(p1, p2, p3, pos);
 
             //use barycentric coordinates to project the ball position onto the triangle plane and check if we are inside the triangle
@@ -788,26 +785,6 @@ namespace Engine3D
             glm::vec3 translated_p1 = translated_p1_delta + pos;
             glm::vec3 translated_p2 = translated_p2_delta + pos;
             glm::vec3 translated_p3 = translated_p3_delta + pos;
-
-            //calculate barycentric coordinates
-            auto barycentric = [](const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& p) -> glm::vec3
-            {
-                glm::vec3 d0 = b - a;
-                glm::vec3 d1 = c - a;
-
-                glm::vec3 d2 = p - a;
-                float d00 = glm::dot(d0, d0);
-                float d01 = glm::dot(d0, d1);
-                float d11 = glm::dot(d1, d1);
-                float d20 = glm::dot(d2, d0);
-                float d21 = glm::dot(d2, d1);
-                float denom = d00 * d11 - d01 * d01;
-
-                float v = (d11 * d20 - d01 * d21) / denom;
-                float w = (d00 * d21 - d01 * d20) / denom;
-
-                return glm::vec3(v, w, 1.0 - v - w);
-            };
 
             glm::vec3 bar = barycentric(translated_p1, translated_p2, translated_p3, pos);
 
@@ -953,7 +930,53 @@ namespace Engine3D
                 return res;
             }
 
-            res.occurred = true;
+            glm::vec3 ray_dir;
+            glm::vec3 ray_intersection;
+
+            //TODO: calculate 
+            if((t1_p1s && !t1_p2s) || (t1_p2s && !t1_p1s))
+            {
+            	ray_dir          = t1_p2 - t1_p1;
+            	ray_intersection = t1_p1 + RayVsPlane(t1_p1, ray_dir, t2_p1, plane2_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true;
+	            }
+            }
+            if(!res.occurred && ((t1_p1s && !t1_p3s) || (t1_p3s && !t1_p1s)))
+            {
+            	ray_dir          = t1_p3 - t1_p1;
+            	ray_intersection = t1_p1 + RayVsPlane(t1_p1, ray_dir, t2_p1, plane2_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true;
+	            }
+            }
+            if(!res.occurred && ((t1_p2s && !t1_p3s) || (t1_p3s && !t1_p2s)))
+            {
+            	ray_dir          = t1_p3 - t1_p2;
+            	ray_intersection = t1_p2 + RayVsPlane(t1_p2, ray_dir, t2_p1, plane2_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true;
+	            }
+            }
+
             
             return res;
         }
