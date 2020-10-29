@@ -933,13 +933,13 @@ namespace Engine3D
 
 			Ray intersection_line = PlaneVsPlane(t1_p1, plane1_nor, t2_p1, plane2_nor);
 
-			bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0;
-			bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0;
-			bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0;
+			bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0; std::printf("t1p1: %s\n", t1_p1s ? "true" : "false");
+			bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0; std::printf("t1p2: %s\n", t1_p2s ? "true" : "false");
+			bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0; std::printf("t1p3: %s\n", t1_p3s ? "true" : "false");
 
-			bool t2_p1s = glm::dot(plane2_nor, t2_p1 - intersection_line.pos) > 0;
-			bool t2_p2s = glm::dot(plane2_nor, t2_p2 - intersection_line.pos) > 0;
-			bool t2_p3s = glm::dot(plane2_nor, t2_p3 - intersection_line.pos) > 0;
+			bool t2_p1s = glm::dot(plane1_nor, t2_p1 - intersection_line.pos) > 0; std::printf("t2p1: %s\n", t2_p1s ? "true" : "false");
+			bool t2_p2s = glm::dot(plane1_nor, t2_p2 - intersection_line.pos) > 0; std::printf("t2p2: %s\n", t2_p2s ? "true" : "false");
+			bool t2_p3s = glm::dot(plane1_nor, t2_p3 - intersection_line.pos) > 0; std::printf("t2p3: %s\n", t2_p3s ? "true" : "false");
 
 			if(( t1_p1s &&  t1_p2s &&  t1_p3s) ||
 			   (!t1_p1s && !t1_p2s && !t1_p3s))

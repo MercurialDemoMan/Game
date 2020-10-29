@@ -12,14 +12,18 @@
  */
 void GameLogic::init()
 {
-	glm::vec3 c_pos1 = glm::vec3(0, 0, 0);
-	glm::vec3 c_nor1 = glm::vec3(1, 0, 0);
-	glm::vec3 c_pos2 = glm::vec3(1, 0, 0);
-	glm::vec3 c_nor2 = glm::vec3(0, 0.707, 0.707);
+	float c_off = 6;
+	glm::vec3 c_t1p1 { -10, -10, 0 };
+	glm::vec3 c_t1p2 { +10, -10, 0 };
+	glm::vec3 c_t1p3 { +10, +10, 0 };
 
-	Engine3D::Ray r = Engine3D::Collision::PlaneVsPlane(c_pos1, c_nor1, c_pos2, c_nor2);
+	glm::vec3 c_t2p1 { -2, 0, 0 + c_off };
+	glm::vec3 c_t2p2 { 5, 0, 5 + c_off };
+	glm::vec3 c_t2p3 { 5, 0, -5 + c_off };
 
-		std::printf("%f, %f, %f - %f, %f, %f\n", r.pos.x, r.pos.y, r.pos.z, r.dir.x, r.dir.y, r.dir.z);
+	Engine3D::Collision::Data r = Engine3D::Collision::TriangleVsTriangle(c_t1p1, c_t1p2, c_t1p3, c_t2p1, c_t2p2, c_t2p3);
+	if(r)
+		std::printf("yes\n");
 		//std::printf("r: %f, %f, %f\n", r.displacement.x, r.displacement.y, r.displacement.z);
 
 	this->setVSync(Engine3D::Game::VSync::On);
