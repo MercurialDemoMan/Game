@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/transform.hpp>
+
 namespace Engine3D
 {
 	namespace Collision
@@ -208,12 +211,12 @@ namespace Engine3D
 			if (time1 >= 0.0f && time1 <= 1.0f)
 			{
 				res.occurred = true;
-				res.displacement = -dir * time1;
+				res.displacement = dir * time1;
 			}
 			else if (time2 >= 0.0f && time2 <= 1.0f)
 			{
 				res.occurred = true;
-				res.displacement = -dir * time2;
+				res.displacement = dir * time2;
 			}
 			
 			return res;
@@ -455,6 +458,38 @@ namespace Engine3D
 			return CylinderVsCylinderSweep(c1.pos, c1.dims, velocity, c2.pos, c2.dims);
 		}
 
+		Data RayVsBean(const glm::vec3& pos1, const glm::vec3& dir,
+					   const glm::vec3& pos2, const glm::vec2& dims)
+		{
+			glm::vec3 first_cap_pos  = pos2 + glm::vec3(0, dims.y / 2.0f, 0);
+			glm::vec3 second_cap_pos = pos2 - glm::vec3(0, dims.y / 2.0f, 0);
+
+			std::vector<Data> results = 
+			{
+				RayVsCylinder(pos1, dir, pos2, dims),
+				RayVsBall(pos1, dir, first_cap_pos, dims.x),
+				RayVsBall(pos1, dir, second_cap_pos, dims.x)
+			};
+
+			std::printf("c: %s, %f\n", results[0] ? "true" : "false", glm::length(results[0].displacement));
+			std::printf("t: %s, %f\n", results[1] ? "true" : "false", glm::length(results[1].displacement));
+			std::printf("b: %s, %f\n", results[2] ? "true" : "false", glm::length(results[2].displacement));
+
+			std::sort(results.begin(), results.end(), [](const Data& d1, const Data& d2) -> bool 
+			{ 
+				float add1 = d1.occurred ? 0.0f : std::numeric_limits<float>::infinity();
+				float add2 = d2.occurred ? 0.0f : std::numeric_limits<float>::infinity();
+
+				return add1 + glm::dot(d1.displacement, d1.displacement) < add2 + glm::dot(d2.displacement, d2.displacement);
+			});
+
+			return results[0];
+		}
+		Data RayVsBean(const Ray& ray, const Bean& bean)
+		{
+			return RayVsBean(ray.pos, ray.dir, bean.pos, bean.dims);
+		}
+
 		/**
 		 * ball vs line
 		 *
@@ -527,8 +562,34 @@ namespace Engine3D
 		Data BallVsLineSweep(const glm::vec3& pos, const float& radius, const glm::vec3& velocity,
 							 const glm::vec3& p1, const glm::vec3& p2)
 		{
-			//TODO:
-			Data res;
+			glm::vec3 line = p2 - p1;
+
+			float inv_angle = glm::angle(glm::vec3(0, 1, 0), glm::normalize(line));
+			glm::vec3 angle_dir;
+			if(inv_angle < 0.1 || inv_angle > M_PI - 0.1)
+			{
+				angle_dir = glm::vec3(1, 0, 0);
+			}
+			else
+			{
+				angle_dir = glm::cross(glm::vec3(0, 1, 0), line);
+			}
+
+			float line_len = glm::length(line);
+
+			glm::vec3 bean_pos  = glm::vec3(0, line_len / 2.0f, 0);
+			glm::vec2 bean_dims = glm::vec2(radius, line_len);
+
+			glm::vec3 ray_start = glm::rotate(pos - p1,              -inv_angle, angle_dir); 
+			glm::vec3 ray_end   = glm::rotate((pos + velocity) - p1, -inv_angle, angle_dir);
+			glm::vec3 ray_dir   = ray_end - ray_start;
+
+			Data res = RayVsBean(ray_start, ray_dir, bean_pos, bean_dims);
+
+			if(res)
+			{
+				res.displacement = glm::rotate(res.displacement, inv_angle, angle_dir);
+			}
 
 			return res;
 		}

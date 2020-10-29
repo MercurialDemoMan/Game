@@ -12,6 +12,16 @@
  */
 void GameLogic::init()
 {
+	glm::vec3 c_pos = { 0, 0, 0 };
+	float     c_rad = 5;
+	glm::vec3 c_mov = { 10, -10, 0 };
+	glm::vec3 c_p1  = { 10, -10, 0 };
+	glm::vec3 c_p2  = { 10, 0, 0 };
+	Engine3D::Collision::Data r = Engine3D::Collision::BallVsLineSweep(c_pos, c_rad, c_mov, c_p1, c_p2);
+
+	if(r)
+		std::printf("r: %f, %f, %f\n", r.displacement.x, r.displacement.y, r.displacement.z);
+
 	this->setVSync(Engine3D::Game::VSync::On);
 
 	this->setBackgroundColor(0.05f, 0.05f, 0.2f);

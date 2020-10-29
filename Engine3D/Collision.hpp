@@ -116,6 +116,10 @@ namespace Engine3D
 									 const glm::vec3& pos2, const glm::vec2& dims2);
 		Data CylinderVsCylinderSweep(const Cylinder& c1, const glm::vec3& velocity, const Cylinder& c2);
 
+		Data RayVsBean(const glm::vec3& pos1, const glm::vec3& dir,
+					   const glm::vec3& pos2, const glm::vec2& dims);
+		Data RayVsBean(const Ray& ray, const Bean& bean);
+
 		/**
 		 * ball vs line
 		 *

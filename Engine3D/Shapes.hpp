@@ -74,4 +74,13 @@ namespace Engine3D
 		glm::vec3 p2 { 0 };
 		glm::vec3 p3 { 0 };
 	};
+
+	struct Bean
+	{
+		Bean() {}
+		Bean(glm::vec3 pos, glm::vec2 dims) : pos(pos), dims(dims) {}
+
+		glm::vec3 pos  { 0 };
+		glm::vec2 dims { 0 };
+	};
 };
