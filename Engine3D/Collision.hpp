@@ -176,6 +176,9 @@ namespace Engine3D
          * \arg velocity   - velocity of the ball
          * \arg p1, p2, p3 - triangle points
          */
+        Data RayVsTriangle(const glm::vec3& pos, const glm::vec3& dir,
+                           const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+        Data RayVsTriangle(const Ray& ray, const Triangle& triangle);
         Data BallVsTriangleSweep(const glm::vec3& pos, const float& radius, const glm::vec3& velocity,
                                  const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
         Data BallVsTriangleSweep(const Ball& ball, const glm::vec3& velocity, const Triangle& triangle);

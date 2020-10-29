@@ -208,7 +208,6 @@ namespace Engine3D
         Data RayVsBall(const glm::vec3& pos1, const glm::vec3& dir,
                        const glm::vec3& pos2, const float& radius)
         {
-            //TODO: test this
             Data res;
 
             glm::vec3 delta = pos1 - pos2;
@@ -490,10 +489,6 @@ namespace Engine3D
                 RayVsBall(pos1, dir, second_cap_pos, dims.x)
             };
 
-            std::printf("c: %s, %f\n", results[0] ? "true" : "false", glm::length(results[0].displacement));
-            std::printf("t: %s, %f\n", results[1] ? "true" : "false", glm::length(results[1].displacement));
-            std::printf("b: %s, %f\n", results[2] ? "true" : "false", glm::length(results[2].displacement));
-
             std::sort(results.begin(), results.end(), [](const Data& d1, const Data& d2) -> bool 
             { 
                 float add1 = d1.occurred ? 0.0f : std::numeric_limits<float>::infinity();
@@ -751,13 +746,65 @@ namespace Engine3D
          * \arg velocity   - velocity of the ball
          * \arg p1, p2, p3 - triangle points
          */
+        Data RayVsTriangle(const glm::vec3& pos, const glm::vec3& dir,
+                           const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
+        {
+        	glm::vec3 plane_normal = glm::cross(p2 - p1, p3 - p1);
+        	Data res = RayVsPlane(pos, dir, p1, plane_normal);
+
+			if(!res)
+			{
+				return res;
+			}        	
+
+			glm::vec3 intersection = pos + res.displacement;
+
+			glm::vec3 bar = barycentric(p1, p2, p3, intersection);
+
+            if (bar.x >= 0 && bar.x <= 1 &&
+                bar.y >= 0 && bar.y <= 1 &&
+                bar.z >= 0 && bar.z <= 1)
+            {
+            	return res;
+            }
+
+            return {};
+        }
+        Data RayVsTriangle(const Ray& ray, const Triangle& triangle)
+        {
+        	return RayVsTriangle(ray.pos, ray.dir, triangle.p1, triangle.p2, triangle.p3);
+        }
         Data BallVsTriangleSweep(const glm::vec3& pos, const float& radius, const glm::vec3& velocity,
                                  const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
         {
-            //TODO:
-            Data res;
+        	glm::vec3 triangle_normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
 
-            return res;
+        	glm::vec3 top_triangle_p1 = p1 + triangle_normal * radius;
+        	glm::vec3 top_triangle_p2 = p2 + triangle_normal * radius;
+        	glm::vec3 top_triangle_p3 = p3 + triangle_normal * radius;
+
+        	glm::vec3 bot_triangle_p1 = p1 - triangle_normal * radius;
+        	glm::vec3 bot_triangle_p2 = p2 - triangle_normal * radius;
+        	glm::vec3 bot_triangle_p3 = p3 - triangle_normal * radius;
+
+            std::vector<Data> results = 
+            {
+                BallVsLineSweep(pos, radius, velocity, p1, p2),
+                BallVsLineSweep(pos, radius, velocity, p2, p3),
+                BallVsLineSweep(pos, radius, velocity, p3, p1),
+                RayVsTriangle(pos, velocity, top_triangle_p1, top_triangle_p2, top_triangle_p3),
+                RayVsTriangle(pos, velocity, bot_triangle_p1, bot_triangle_p2, bot_triangle_p3)
+            };
+            
+            std::sort(results.begin(), results.end(), [](const Data& d1, const Data& d2) -> bool 
+            { 
+                float add1 = d1.occurred ? 0.0f : std::numeric_limits<float>::infinity();
+                float add2 = d2.occurred ? 0.0f : std::numeric_limits<float>::infinity();
+
+                return add1 + glm::dot(d1.displacement, d1.displacement) < add2 + glm::dot(d2.displacement, d2.displacement);
+            });
+
+            return results[0];
         }
         Data BallVsTriangleSweep(const Ball& ball, const glm::vec3& velocity, const Triangle& triangle)
         {
@@ -843,12 +890,21 @@ namespace Engine3D
          * \arg p1, p2, p3 - triangle points
          */
         Data EllipsoidVsTriangleSweep(const glm::vec3& pos, const glm::vec3& dims, const glm::vec3& velocity,
-            const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
+                                      const glm::vec3& p1,  const glm::vec3& p2,   const glm::vec3& p3)
         {
-            //TODO:
             Data res;
 
-            return res;
+            glm::vec3 translated_p1_delta = (p1 - pos) / dims;
+            glm::vec3 translated_p2_delta = (p2 - pos) / dims;
+            glm::vec3 translated_p3_delta = (p3 - pos) / dims;
+
+            glm::vec3 translated_p1 = translated_p1_delta + pos;
+            glm::vec3 translated_p2 = translated_p2_delta + pos;
+            glm::vec3 translated_p3 = translated_p3_delta + pos;
+
+            glm::vec3 translated_velocity = velocity / dims;
+
+            return BallVsTriangleSweep(pos, 1, translated_velocity, translated_p1, translated_p2, translated_p3);
         }
         Data EllipsoidVsTriangleSweep(const Ellipsoid& ellipsoid, const glm::vec3& velocity, const Triangle& triangle)
         {
@@ -933,7 +989,6 @@ namespace Engine3D
             glm::vec3 ray_dir;
             glm::vec3 ray_intersection;
 
-            //TODO: calculate 
             if((t1_p1s && !t1_p2s) || (t1_p2s && !t1_p1s))
             {
             	ray_dir          = t1_p2 - t1_p1;
