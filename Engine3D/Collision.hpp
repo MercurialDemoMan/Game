@@ -7,7 +7,6 @@ namespace Engine3D
 {
     namespace Collision
     {
-        //TODO: make all functions use this data structure as a return value
         struct Data
         {
             Data() {}
@@ -104,18 +103,51 @@ namespace Engine3D
                                 const glm::vec3& pos2, const glm::vec2& dims2);
         Data CylinderVsCylinder(const Cylinder& c1, const Cylinder& c2);
 
+        /**
+         * ray vs plane
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D point on the plane
+         * \arg nor  - 3D normal describing the plane
+         */
         Data RayVsPlane(const glm::vec3& pos1, const glm::vec3& dir,
                         const glm::vec3& pos2, const glm::vec3& nor);
         Data RayVsPlane(const Ray& ray, const Plane& plane);
 
+        /**
+         * ray vs cylinder
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D position of the cylinder
+         * \arg dims - width and height of the cylinder
+         */
         Data RayVsCylinder(const glm::vec3& pos1, const glm::vec3& dir,
                            const glm::vec3& pos2, const glm::vec2& dims);
         Data RayVsCylinder(const Ray& ray, const Cylinder& cylinder);
 
+        /**
+         * cylinder vs cylinder sweep
+         *
+         * \arg pos1     - 3D position of the first cylinder
+         * \arg dims1    - width and height of the first cylinder
+         * \arg velocity - velocity of the first cylinder
+         * \arg pos2     - 3D position of the second cylinder
+         * \arg dims2    - width and height of the second cylinder
+         */
         Data CylinderVsCylinderSweep(const glm::vec3& pos1, const glm::vec2& dims1, const glm::vec3& velocity,
                                      const glm::vec3& pos2, const glm::vec2& dims2);
         Data CylinderVsCylinderSweep(const Cylinder& c1, const glm::vec3& velocity, const Cylinder& c2);
 
+        /**
+         * ray vs bean
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D position of the bean
+         * \arg dims - width and height of the bean
+         */
         Data RayVsBean(const glm::vec3& pos1, const glm::vec3& dir,
                        const glm::vec3& pos2, const glm::vec2& dims);
         Data RayVsBean(const Ray& ray, const Bean& bean);
@@ -169,16 +201,26 @@ namespace Engine3D
         Data BallVsTriangle(const Ball& ball, const Triangle& triangle);
 
         /**
-         * sweep ball vs triangle
+         * ray vs triangle
+         *
+         * \arg pos - 3D position of the ray start
+         * \arg dir - 3D direction of the ray
+         * \arg p1  - first 3D point of the triangle
+         * \arg p2  - second 3D point of the triangle
+         * \arg p3  - third 3D point of the triangle
+         */
+        Data RayVsTriangle(const glm::vec3& pos, const glm::vec3& dir,
+                           const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
+        Data RayVsTriangle(const Ray& ray, const Triangle& triangle);
+
+        /**
+         * ball vs triangle sweep
          *
          * \arg pos        - 3D center of the ball
          * \arg radius     - radius of the ball
          * \arg velocity   - velocity of the ball
          * \arg p1, p2, p3 - triangle points
          */
-        Data RayVsTriangle(const glm::vec3& pos, const glm::vec3& dir,
-                           const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
-        Data RayVsTriangle(const Ray& ray, const Triangle& triangle);
         Data BallVsTriangleSweep(const glm::vec3& pos, const float& radius, const glm::vec3& velocity,
                                  const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3);
         Data BallVsTriangleSweep(const Ball& ball, const glm::vec3& velocity, const Triangle& triangle);
@@ -207,12 +249,27 @@ namespace Engine3D
         Data EllipsoidVsTriangleSweep(const Ellipsoid& ellipsoid, const glm::vec3& velocity, const Triangle& triangle);
 
         /**
-         * triangle vs triangle
+         * plane vs plane
          *
+         * \arg pos1 - 3D point on the first plane
+         * \arg nor1 - 3D normal defining the first plane
+         * \arg pos2 - 3D point on the second plane
+         * \arg nor1 - 3D normal defining the second plane
          */
         Ray PlaneVsPlane(const glm::vec3& pos1, const glm::vec3& nor1,
                          const glm::vec3& pos2, const glm::vec3& nor2);
         Ray PlaneVsPlane(const Plane& plane1, const Plane& plane2);
+
+        /**
+         * triangle vs triangle
+         *
+         * \arg t1_p1 - first 3D point of the first triangle
+         * \arg t1_p2 - second 3D point of the first triangle
+         * \arg t1_p3 - third 3D point of the first triangle
+         * \arg t2_p1 - first 3D point of the second triangle
+         * \arg t2_p2 - second 3D point of the second triangle
+         * \arg t2_p3 - third 3D point of the second triangle
+         */
         Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
                                 const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
         Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);

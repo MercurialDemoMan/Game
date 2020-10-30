@@ -326,6 +326,14 @@ namespace Engine3D
             return CylinderVsCylinder(c1.pos, c1.dims, c2.pos, c2.dims);
         }
 
+        /**
+         * ray vs plane
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D point on the plane
+         * \arg nor  - 3D normal describing the plane
+         */
         Data RayVsPlane(const glm::vec3& pos1, const glm::vec3& dir,
                         const glm::vec3& pos2, const glm::vec3& nor)
         {
@@ -353,6 +361,14 @@ namespace Engine3D
             return RayVsPlane(ray.pos, ray.dir, plane.pos, plane.nor);
         }
 
+        /**
+         * ray vs cylinder
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D position of the cylinder
+         * \arg dims - width and height of the cylinder
+         */
         Data RayVsCylinder(const glm::vec3& pos1, const glm::vec3& dir,
                            const glm::vec3& pos2, const glm::vec2& dims)
         {
@@ -464,6 +480,15 @@ namespace Engine3D
             return RayVsCylinder(ray.pos, ray.dir, cylinder.pos, cylinder.dims);
         }
 
+        /**
+         * cylinder vs cylinder sweep
+         *
+         * \arg pos1     - 3D position of the first cylinder
+         * \arg dims1    - width and height of the first cylinder
+         * \arg velocity - velocity of the first cylinder
+         * \arg pos2     - 3D position of the second cylinder
+         * \arg dims2    - width and height of the second cylinder
+         */
         Data CylinderVsCylinderSweep(const glm::vec3& pos1, const glm::vec2& dims1, const glm::vec3& velocity,
                                      const glm::vec3& pos2, const glm::vec2& dims2)
         {
@@ -475,7 +500,14 @@ namespace Engine3D
         {
             return CylinderVsCylinderSweep(c1.pos, c1.dims, velocity, c2.pos, c2.dims);
         }
-
+        /**
+         * ray vs bean
+         *
+         * \arg pos1 - 3D position of the ray start
+         * \arg dir  - 3D direction of the ray
+         * \arg pos2 - 3D position of the bean
+         * \arg dims - width and height of the bean
+         */
         Data RayVsBean(const glm::vec3& pos1, const glm::vec3& dir,
                        const glm::vec3& pos2, const glm::vec2& dims)
         {
@@ -774,6 +806,14 @@ namespace Engine3D
         {
         	return RayVsTriangle(ray.pos, ray.dir, triangle.p1, triangle.p2, triangle.p3);
         }
+        /**
+         * ball vs triangle sweep
+         *
+         * \arg pos        - 3D center of the ball
+         * \arg radius     - radius of the ball
+         * \arg velocity   - velocity of the ball
+         * \arg p1, p2, p3 - triangle points
+         */
         Data BallVsTriangleSweep(const glm::vec3& pos, const float& radius, const glm::vec3& velocity,
                                  const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
         {
@@ -911,6 +951,14 @@ namespace Engine3D
             return EllipsoidVsTriangleSweep(ellipsoid.pos, ellipsoid.dims, velocity, triangle.p1, triangle.p2, triangle.p3);
         }
 
+        /**
+         * plane vs plane
+         *
+         * \arg pos1 - 3D point on the first plane
+         * \arg nor1 - 3D normal defining the first plane
+         * \arg pos2 - 3D point on the second plane
+         * \arg nor1 - 3D normal defining the second plane
+         */
         Ray PlaneVsPlane(const glm::vec3& pos1, const glm::vec3& nor1,
                          const glm::vec3& pos2, const glm::vec3& nor2)
         {
@@ -956,6 +1004,16 @@ namespace Engine3D
             return PlaneVsPlane(plane1.pos, plane1.nor, plane2.pos, plane2.nor);
         }
 
+        /**
+         * triangle vs triangle
+         *
+         * \arg t1_p1 - first 3D point of the first triangle
+         * \arg t1_p2 - second 3D point of the first triangle
+         * \arg t1_p3 - third 3D point of the first triangle
+         * \arg t2_p1 - first 3D point of the second triangle
+         * \arg t2_p2 - second 3D point of the second triangle
+         * \arg t2_p3 - third 3D point of the second triangle
+         */
         Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
                                 const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
         {
@@ -966,13 +1024,13 @@ namespace Engine3D
 
             Ray intersection_line = PlaneVsPlane(t1_p1, plane1_nor, t2_p1, plane2_nor);
 
-            bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0; std::printf("t1p1: %s\n", t1_p1s ? "true" : "false");
-            bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0; std::printf("t1p2: %s\n", t1_p2s ? "true" : "false");
-            bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0; std::printf("t1p3: %s\n", t1_p3s ? "true" : "false");
+            bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0; 
+            bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0;
+            bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0; 
 
-            bool t2_p1s = glm::dot(plane1_nor, t2_p1 - intersection_line.pos) > 0; std::printf("t2p1: %s\n", t2_p1s ? "true" : "false");
-            bool t2_p2s = glm::dot(plane1_nor, t2_p2 - intersection_line.pos) > 0; std::printf("t2p2: %s\n", t2_p2s ? "true" : "false");
-            bool t2_p3s = glm::dot(plane1_nor, t2_p3 - intersection_line.pos) > 0; std::printf("t2p3: %s\n", t2_p3s ? "true" : "false");
+            bool t2_p1s = glm::dot(plane1_nor, t2_p1 - intersection_line.pos) > 0;
+            bool t2_p2s = glm::dot(plane1_nor, t2_p2 - intersection_line.pos) > 0;
+            bool t2_p3s = glm::dot(plane1_nor, t2_p3 - intersection_line.pos) > 0; 
 
             if(( t1_p1s &&  t1_p2s &&  t1_p3s) ||
                (!t1_p1s && !t1_p2s && !t1_p3s))
@@ -1000,10 +1058,10 @@ namespace Engine3D
 	                bar.y >= 0 && bar.y <= 1 &&
 	                bar.z >= 0 && bar.z <= 1)
 	            {
-	            	res.occurred = true;
+	            	res.occurred = true; return res;
 	            }
             }
-            if(!res.occurred && ((t1_p1s && !t1_p3s) || (t1_p3s && !t1_p1s)))
+            if((t1_p1s && !t1_p3s) || (t1_p3s && !t1_p1s))
             {
             	ray_dir          = t1_p3 - t1_p1;
             	ray_intersection = t1_p1 + RayVsPlane(t1_p1, ray_dir, t2_p1, plane2_nor).displacement;
@@ -1014,10 +1072,10 @@ namespace Engine3D
 	                bar.y >= 0 && bar.y <= 1 &&
 	                bar.z >= 0 && bar.z <= 1)
 	            {
-	            	res.occurred = true;
+	            	res.occurred = true; return res;
 	            }
             }
-            if(!res.occurred && ((t1_p2s && !t1_p3s) || (t1_p3s && !t1_p2s)))
+            if((t1_p2s && !t1_p3s) || (t1_p3s && !t1_p2s))
             {
             	ray_dir          = t1_p3 - t1_p2;
             	ray_intersection = t1_p2 + RayVsPlane(t1_p2, ray_dir, t2_p1, plane2_nor).displacement;
@@ -1028,10 +1086,52 @@ namespace Engine3D
 	                bar.y >= 0 && bar.y <= 1 &&
 	                bar.z >= 0 && bar.z <= 1)
 	            {
-	            	res.occurred = true;
+	            	res.occurred = true; return res;
 	            }
             }
 
+            if((t2_p1s && !t2_p2s) || (t2_p2s && !t2_p1s))
+            {
+            	ray_dir          = t2_p2 - t2_p1;
+            	ray_intersection = t2_p1 + RayVsPlane(t2_p1, ray_dir, t1_p1, plane1_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true; return res;
+	            }
+            }
+            if((t2_p1s && !t2_p3s) || (t2_p3s && !t2_p1s))
+            {
+            	ray_dir          = t2_p3 - t2_p1;
+            	ray_intersection = t2_p1 + RayVsPlane(t2_p1, ray_dir, t1_p1, plane1_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true; return res;
+	            }
+            }
+            if((t2_p2s && !t2_p3s) || (t2_p3s && !t2_p2s))
+            {
+            	ray_dir          = t2_p3 - t2_p2;
+            	ray_intersection = t2_p2 + RayVsPlane(t2_p2, ray_dir, t1_p1, plane1_nor).displacement;
+
+            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+
+	            if (bar.x >= 0 && bar.x <= 1 &&
+	                bar.y >= 0 && bar.y <= 1 &&
+	                bar.z >= 0 && bar.z <= 1)
+	            {
+	            	res.occurred = true; return res;
+	            }
+            }
             
             return res;
         }
