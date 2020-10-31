@@ -1139,5 +1139,192 @@ namespace Engine3D
         {
             return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
         }
+        Data SAT(SceneObject* m1, SceneObject* m2)
+        {
+            Data res;
+
+            //variables for calculation of minimal translation vector
+            float min_overlap = std::numeric_limits<float>::max();
+            glm::vec3 min_trans_vec = glm::vec3(0);
+
+            glm::vec3 delta = m2->pos() - m1->pos();
+
+            //extract vertices
+            const std::vector<Vertex>& m1_vertices = *m1->vertices();
+            const std::vector<Vertex>& m2_vertices = *m2->vertices();
+
+            //for every triangle in mesh 1
+            for(u32 i = 0; i < m1_vertices.size(); i += 3)
+            {
+                //Triangle t = m1->constructTriangle(i);
+
+                //calculate triangle normal
+                glm::vec3 t_normal = glm::normalize(m1_vertices[i].nor);
+        
+                float projection;
+
+                //save bounds of the projected mesh
+                float m1_min;
+                float m1_max;
+
+                //project mesh 1 onto the triangle normal
+                for(u32 j = 0; j < m1_vertices.size(); j++)
+                {
+                    projection = glm::dot(m1->pos() + m1_vertices[j].pos * m1->scale(), t_normal);
+
+                    if(j == 0)
+                    {
+                        m1_min = m1_max = projection;
+                    }
+                    else
+                    {
+                        if(projection < m1_min) { m1_min = projection; }
+                        if(projection > m1_max) { m1_max = projection; }
+                    }
+                }
+
+                //save bounds of the projected mesh
+                float m2_min;
+                float m2_max;
+
+                //project mesh 2 onto the triangle normal
+                for(u32 j = 0; j < m2_vertices.size(); j++)
+                {
+                    projection = glm::dot(m2->pos() + m2_vertices[j].pos * m2->scale(), t_normal);
+
+                    if(j == 0)
+                    {
+                        m2_min = m2_max = projection;
+                    }
+                    else
+                    {
+                        if(projection < m2_min) { m2_min = projection; }
+                        if(projection > m2_max) { m2_max = projection; }
+                    }
+                }
+
+                //if there is a gap between meshes -> no collision
+                if(!(m1_min <= m2_max && m2_min <= m1_max))
+                {
+                    return res;
+                }
+                else
+                {
+                    //calculate the overlap
+                    float overlap = std::min(m1_max, m2_max) - std::max(m1_min, m2_min);
+
+                    //check if one mesh is inside the other
+                    if((m1_max < m2_max && m1_min > m2_min) || (m1_max > m2_max && m1_min < m2_min))
+                    {
+                        float mins = std::fabs(m1_min - m2_min);
+                        float maxs = std::fabs(m1_max - m2_max);
+
+                        if(mins < maxs) { overlap += mins; }
+                        else            { overlap += maxs; }
+                    }
+
+                    //update the final overlap and minimal translation vector
+                    if(overlap < min_overlap)
+                    {
+                        min_overlap = overlap;
+                        min_trans_vec = t_normal * min_overlap;
+
+                        if(glm::dot(delta, min_trans_vec) > 0)
+                        {
+                            min_trans_vec *= -1.0f;
+                        }
+                    }
+                }
+            }
+
+            //for every triangle in mesh 2
+            for(u32 i = 0; i < m2_vertices.size(); i += 3)
+            {
+                //Triangle t = m2->constructTriangle(i);
+
+                //calculate triangle normal
+                glm::vec3 t_normal = glm::normalize(m2_vertices[i].nor);
+        
+                float projection;
+
+                //save bounds of the projected mesh
+                float m1_min;
+                float m1_max;
+
+                //project mesh 1 onto the triangle normal
+                for(u32 j = 0; j < m1_vertices.size(); j++)
+                {
+                    projection = glm::dot(m1->pos() + m1_vertices[j].pos * m1->scale(), t_normal);
+
+                    if(j == 0)
+                    {
+                        m1_min = m1_max = projection;
+                    }
+                    else
+                    {
+                        if(projection < m1_min) { m1_min = projection; }
+                        if(projection > m1_max) { m1_max = projection; }
+                    }
+                }
+
+                //save bounds of the projected mesh
+                float m2_min;
+                float m2_max;
+
+                //project mesh 2 onto the triangle normal
+                for(u32 j = 0; j < m2_vertices.size(); j++)
+                {
+                    projection = glm::dot(m2->pos() + m2_vertices[j].pos * m2->scale(), t_normal);
+
+                    if(j == 0)
+                    {
+                        m2_min = m2_max = projection;
+                    }
+                    else
+                    {
+                        if(projection < m2_min) { m2_min = projection; }
+                        if(projection > m2_max) { m2_max = projection; }
+                    }
+                }
+
+                //if there is a gap between meshes -> no collision
+                if(!(m1_min <= m2_max && m2_min <= m1_max))
+                {
+                    return res;
+                }
+                else
+                {
+                    //calculate the overlap
+                    float overlap = std::min(m1_max, m2_max) - std::max(m1_min, m2_min);
+
+                    //check if one mesh is inside the other
+                    if((m1_max < m2_max && m1_min > m2_min) || (m1_max > m2_max && m1_min < m2_min))
+                    {
+                        float mins = std::fabs(m1_min - m2_min);
+                        float maxs = std::fabs(m1_max - m2_max);
+
+                        if(mins < maxs) { overlap += mins; }
+                        else            { overlap += maxs; }
+                    }
+
+                    //update the final overlap and minimal translation vector
+                    if(overlap < min_overlap)
+                    {
+                        min_overlap = overlap;
+                        min_trans_vec = t_normal * min_overlap;
+
+                        if(glm::dot(delta, min_trans_vec) > 0)
+                        {
+                            min_trans_vec *= -1.0f;
+                        }
+                    }
+                }
+            }
+
+            res.occurred     = true;
+            res.displacement = min_trans_vec;
+
+            return res;
+        }
     };
 };

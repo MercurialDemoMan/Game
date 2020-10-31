@@ -152,7 +152,7 @@ void GameLogic::init()
 
     for (auto& object : m_objects)
     {
-        object->discardVertices();
+        //object->discardVertices();
     }
 
     std::printf("GameLogic() log: spatial partitions constructed\n");
@@ -260,8 +260,12 @@ void GameLogic::update(const float time_delta)
 
         glm::vec3 mov = glm::vec3(cos(m_time / 50.0f) / 5.0f, cos(m_time / 50.0f) / 5.0f, cos(m_time / 100.0f) / 5.0f);
 
-        if(Engine3D::Collision::BoxVsBoxSweep(m_objects[m_objects.size() - 1]->pos(), m_objects[m_objects.size() - 1]->dims(), mov, m_objects[m_objects.size() - 2]->pos(), m_objects[m_objects.size() - 2]->dims()))
+        Engine3D::Collision::Data r = Engine3D::Collision::SAT(m_objects[m_objects.size() - 1], m_objects[m_objects.size() - 2]);
+
+        if(r)
         {
+            m_objects.back()->pos() += r.displacement;
+
             const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 0, 0);
             const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0, 0);
             const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 0, 0);
@@ -651,7 +655,7 @@ void GameLogic::update(const float time_delta)
         m_obj_shader.set1f(4, "material_shininess");
         m_obj_shader.set2f(this->getDims(), "dims");
         m_obj_shader.set1f(1, "reflection_strength");
-        m_obj_shader.set3f(/*m_player.getPos()*/m_light->pos(), "light_pos");
+        m_obj_shader.set3f(m_player.getPos(), "light_pos");
         m_obj_shader.set4x4m(m_player.getCam().getRotationMatrix(), "rot_mat");
         m_obj_shader.set4x4m(m_player.getCam().getViewMatrix(), "view_mat");
         m_obj_shader.set1f(m_time / 100.0f, "time");
