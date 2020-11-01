@@ -1156,10 +1156,8 @@ namespace Engine3D
             //for every triangle in mesh 1
             for(u32 i = 0; i < m1_vertices.size(); i += 3)
             {
-                //Triangle t = m1->constructTriangle(i);
-
                 //calculate triangle normal
-                glm::vec3 t_normal = glm::normalize(m1_vertices[i].nor);
+                glm::vec3 t_normal = glm::normalize(m1->getVertex(i).value().nor);
         
                 float projection;
 
@@ -1170,7 +1168,7 @@ namespace Engine3D
                 //project mesh 1 onto the triangle normal
                 for(u32 j = 0; j < m1_vertices.size(); j++)
                 {
-                    projection = glm::dot(m1->pos() + m1_vertices[j].pos * m1->scale(), t_normal);
+                    projection = glm::dot(m1->getVertex(j).value().pos, t_normal);
 
                     if(j == 0)
                     {
@@ -1190,7 +1188,7 @@ namespace Engine3D
                 //project mesh 2 onto the triangle normal
                 for(u32 j = 0; j < m2_vertices.size(); j++)
                 {
-                    projection = glm::dot(m2->pos() + m2_vertices[j].pos * m2->scale(), t_normal);
+                    projection = glm::dot(m2->getVertex(j).value().pos, t_normal);
 
                     if(j == 0)
                     {
@@ -1240,10 +1238,8 @@ namespace Engine3D
             //for every triangle in mesh 2
             for(u32 i = 0; i < m2_vertices.size(); i += 3)
             {
-                //Triangle t = m2->constructTriangle(i);
-
                 //calculate triangle normal
-                glm::vec3 t_normal = glm::normalize(m2_vertices[i].nor);
+                glm::vec3 t_normal = glm::normalize(m2->getVertex(i).value().nor);
         
                 float projection;
 
@@ -1254,7 +1250,7 @@ namespace Engine3D
                 //project mesh 1 onto the triangle normal
                 for(u32 j = 0; j < m1_vertices.size(); j++)
                 {
-                    projection = glm::dot(m1->pos() + m1_vertices[j].pos * m1->scale(), t_normal);
+                    projection = glm::dot(m1->getVertex(j).value().pos, t_normal);
 
                     if(j == 0)
                     {
@@ -1274,7 +1270,7 @@ namespace Engine3D
                 //project mesh 2 onto the triangle normal
                 for(u32 j = 0; j < m2_vertices.size(); j++)
                 {
-                    projection = glm::dot(m2->pos() + m2_vertices[j].pos * m2->scale(), t_normal);
+                    projection = glm::dot(m2->getVertex(j).value().pos, t_normal);
 
                     if(j == 0)
                     {

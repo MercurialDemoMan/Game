@@ -189,8 +189,18 @@ void GameLogic::update(const float time_delta)
         bool  player_prev_on_ground = m_player.on_ground();
 
         //apply gravity to the player
-        m_player.mov().y -= Player::Gravity;
-        m_player.mov().y  = std::clamp(m_player.mov().y, -Player::MaxVerticalSpeed, Player::MaxVerticalSpeed);
+        //m_player.mov().y -= Player::Gravity;
+        //m_player.mov().y  = std::clamp(m_player.mov().y, -Player::MaxVerticalSpeed, Player::MaxVerticalSpeed);
+
+        m_player.mov().y = 0;
+        if(this->keyDown(Engine3D::Game::Key::LSHIFT))
+        {
+            m_player.mov().y = -0.5;
+        }
+        if(this->keyDown(Engine3D::Game::Key::SPACE))
+        {
+            m_player.mov().y = 0.5;
+        }
 
         m_player.addPos(glm::vec3(0, m_player.mov().y * time_delta * time_delta, 0));
 
@@ -254,10 +264,12 @@ void GameLogic::update(const float time_delta)
             m_player.reset();
         }*/
 
-        m_objects.back()->pos().x += cos(m_time / 50.0f) / 5.0f;
-        m_objects.back()->pos().z += cos(m_time / 50.0f) / 5.0f;
-        m_objects.back()->pos().y += cos(m_time / 100.0f) / 5.0f;
+        m_objects.back()->pos().x = 0 + cos(m_time / 50.0f) * 5.0f;
+        m_objects.back()->pos().z = -30 + cos(m_time / 50.0f) * 5.0f;
+        m_objects.back()->pos().y = -20 + cos(m_time / 100.0f) * 5.0f;
 
+        m_objects.back()->rotate(m_time / 100.0f, glm::vec3(0, 0.707, 0.707));
+        
         glm::vec3 mov = glm::vec3(cos(m_time / 50.0f) / 5.0f, cos(m_time / 50.0f) / 5.0f, cos(m_time / 100.0f) / 5.0f);
 
         Engine3D::Collision::Data r = Engine3D::Collision::SAT(m_objects[m_objects.size() - 1], m_objects[m_objects.size() - 2]);

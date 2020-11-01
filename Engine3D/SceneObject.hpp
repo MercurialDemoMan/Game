@@ -1,6 +1,9 @@
 #pragma once
 
+#include <optional>
+
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
@@ -39,7 +42,19 @@ namespace Engine3D
          * access attributes
          */
         glm::vec3& pos()            { return m_pos; }
-        glm::vec3& rot()            { return m_rot; }
+        glm::mat4& rot()            { return m_rot; }
+        glm::mat4& rotate(float angle, glm::vec3 normal)
+        {
+        	glm::quat q = 
+        	{
+        		cos(angle / 2.0f),
+        		normal.x * sin(angle / 2.0f),
+        		normal.y * sin(angle / 2.0f),
+        		normal.z * sin(angle / 2.0f)
+        	};
+        	m_rot = glm::toMat4(q);
+        	return m_rot;
+        }
         glm::vec3& dims()           { return m_dims; }
         glm::vec3& scale()          { return m_scale; }
         const Material* material()  { return m_mesh.material(); }
@@ -50,6 +65,11 @@ namespace Engine3D
          * deletes the data saved in ram
          */
         void discardVertices() { m_mesh.discardVertices(); }
+
+        /**
+         * extract vertex
+         */
+        std::optional<Vertex> getVertex(u32 i);
 
         /**
          * extract triangle from vertices
@@ -64,7 +84,7 @@ namespace Engine3D
     protected:
     
         glm::vec3 m_pos     { 0 };
-        glm::vec3 m_rot     { 0 };
+        glm::mat4 m_rot     { 1 };
         glm::vec3 m_dims    { 1, 1, 1 };
         glm::vec3 m_scale   { 1, 1, 1 };
         Texture   m_texture;

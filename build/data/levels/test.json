@@ -15,14 +15,14 @@
 	},
 
 	{
-		"m" : "data/objects/rock.obj",
+		"m" : "data/objects/cube.obj",
 		"x" : 0, "y" : -30, "z" : -20,
 		"s" : 6,
 		"t" : 1
 	},
 
 	{
-		"m" : "data/objects/rock.obj",
+		"m" : "data/objects/cube.obj",
 		"x" : 3, "y" : -30, "z" : -20,
 		"s" : 6,
 		"t" : 1
