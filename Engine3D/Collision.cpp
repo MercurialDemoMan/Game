@@ -1019,18 +1019,24 @@ namespace Engine3D
         {
             Data res;
 
-            glm::vec3 plane1_nor = glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1);
-            glm::vec3 plane2_nor = glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1);
+            glm::vec3 plane1_nor = glm::normalize(glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1));
+            glm::vec3 plane2_nor = glm::normalize(glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1));
 
             Ray intersection_line = PlaneVsPlane(t1_p1, plane1_nor, t2_p1, plane2_nor);
 
-            bool t1_p1s = glm::dot(plane2_nor, t1_p1 - intersection_line.pos) > 0; 
-            bool t1_p2s = glm::dot(plane2_nor, t1_p2 - intersection_line.pos) > 0;
-            bool t1_p3s = glm::dot(plane2_nor, t1_p3 - intersection_line.pos) > 0; 
+            float t1_p1d = glm::dot(plane2_nor, t1_p1 - intersection_line.pos);
+            bool t1_p1s  = t1_p1d > 0; 
+            float t1_p2d = glm::dot(plane2_nor, t1_p2 - intersection_line.pos);
+            bool t1_p2s  = t1_p2d > 0;
+            float t1_p3d = glm::dot(plane2_nor, t1_p3 - intersection_line.pos);
+            bool t1_p3s  = t1_p3d > 0; 
 
-            bool t2_p1s = glm::dot(plane1_nor, t2_p1 - intersection_line.pos) > 0;
-            bool t2_p2s = glm::dot(plane1_nor, t2_p2 - intersection_line.pos) > 0;
-            bool t2_p3s = glm::dot(plane1_nor, t2_p3 - intersection_line.pos) > 0; 
+            float t2_p1d = glm::dot(plane1_nor, t2_p1 - intersection_line.pos);
+            bool t2_p1s  = t2_p1d > 0;
+            float t2_p2d = glm::dot(plane1_nor, t2_p2 - intersection_line.pos);
+            bool t2_p2s  = t2_p2d > 0;
+            float t2_p3d = glm::dot(plane1_nor, t2_p3 - intersection_line.pos);
+            bool t2_p3s  = t2_p3d > 0; 
 
             if(( t1_p1s &&  t1_p2s &&  t1_p3s) ||
                (!t1_p1s && !t1_p2s && !t1_p3s))
@@ -1058,6 +1064,8 @@ namespace Engine3D
 	                bar.y >= 0 && bar.y <= 1 &&
 	                bar.z >= 0 && bar.z <= 1)
 	            {
+                    //TODO: calculate displacement using dot product
+                    
 	            	res.occurred = true; return res;
 	            }
             }
@@ -1139,6 +1147,7 @@ namespace Engine3D
         {
             return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
         }
+        
         Data SAT(SceneObject* m1, SceneObject* m2)
         {
             Data res;

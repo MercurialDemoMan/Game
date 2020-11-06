@@ -52,7 +52,23 @@ namespace Engine3D
         		normal.y * sin(angle / 2.0f),
         		normal.z * sin(angle / 2.0f)
         	};
+
+        	m_rot = m_rot * glm::toMat4(q);
+
+        	return m_rot;
+        }
+        glm::mat4& set_rot(float angle, glm::vec3 normal)
+        {
+        	glm::quat q = 
+        	{
+        		cos(angle / 2.0f),
+        		normal.x * sin(angle / 2.0f),
+        		normal.y * sin(angle / 2.0f),
+        		normal.z * sin(angle / 2.0f)
+        	};
+
         	m_rot = glm::toMat4(q);
+
         	return m_rot;
         }
         glm::vec3& dims()           { return m_dims; }

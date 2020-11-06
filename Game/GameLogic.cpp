@@ -270,7 +270,7 @@ void GameLogic::update(const float time_delta)
 
         //m_objects.back()->pos().y = -20 + cos(m_time / 100.0f) * 5.0f;
 
-        m_objects.back()->rotate(m_time / 100.0f, glm::vec3(0, 0.707, 0.707));
+        m_objects.back()->rotate(0.001f, glm::vec3(0, 0.707, 0.707));
         
         glm::vec3 mov = glm::vec3(cos(m_time / 50.0f) / 5.0f, cos(m_time / 50.0f) / 5.0f, cos(m_time / 100.0f) / 5.0f);
 

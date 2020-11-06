@@ -20,7 +20,7 @@ namespace Engine3D
      */
     Vertices meshCacheLoadingFunction(File& input_file)
     {
-        std::printf("Mesh log: loading file: %s\n", input_file.getPath().c_str());
+        std::printf("Mesh() log: loading file: %s\n", input_file.getPath().c_str());
 
         std::vector<glm::vec3> positions;
         std::vector<glm::vec3> normals;
@@ -321,20 +321,7 @@ namespace Engine3D
 
         // copy vertex data
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-        
-        // set vertex positions
-        //TODO: this is not guaranteed to be 0, use glGetAttribLocation
-        /*glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nor));
-        
-        // set vertex normals
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
 
-        // set vertex uv mapping
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-        */
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -345,7 +332,7 @@ namespace Engine3D
             result.material = std::move(material);
         }
         
-        std::printf("Mesh log: %s - loaded %u vertices\n", input_file.getPath().c_str(), result.data.size());
+        std::printf("Mesh() log: %s - loaded %u vertices\n", input_file.getPath().c_str(), result.data.size());
 
         return result;
     }
