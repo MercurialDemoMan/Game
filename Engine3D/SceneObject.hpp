@@ -7,6 +7,7 @@
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
+#include "Shapes.hpp"
 
 namespace Engine3D
 {
@@ -76,6 +77,18 @@ namespace Engine3D
         const Material* material()  { return m_mesh.material(); }
         
         const std::vector<Engine3D::Vertex>* vertices() { return m_mesh.vertices(); }
+
+        /**
+         * get bounding box
+         */
+        Engine3D::Box boundingBox() 
+        { 
+        	return Engine3D::Box
+        	(
+        		m_pos, 
+        		m_scale * glm::vec3(2.0f * m_mesh.rawVertices()->furthest_vertex_value)
+        	); 
+        }
 
         /**
          * deletes the data saved in ram

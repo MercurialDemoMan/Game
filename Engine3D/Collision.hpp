@@ -274,7 +274,15 @@ namespace Engine3D
         Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
                                 const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
         Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);
-
-        Data SAT(SceneObject* m1, SceneObject* m2);
+        
+        /**
+         * mesh vs mesh using separating axes theorem algorithm
+         */
+        Data MeshVsMeshSeparatingAxesTheorem(SceneObject* m1, SceneObject* m2);
+        
+        /**
+         * mesh vs mesh
+         */
+         Data MeshVsMesh(SceneObject* m1, SceneObject* m2);
     };
 };

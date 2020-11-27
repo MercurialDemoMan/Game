@@ -17,6 +17,7 @@
 #include "JSONDocument.hpp"
 #include "SceneObject.hpp"
 #include "Shader.hpp"
+#include "Shapes.hpp"
 #include "Sound.hpp"
 #include "SpatialPartition.hpp"
 #include "System.hpp"

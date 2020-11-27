@@ -966,36 +966,14 @@ namespace Engine3D
 
             glm::vec3 n = glm::cross(nor1, nor2);
 
-            float a1 = nor1.x;
-            float b1 = nor1.y;
-            float c1 = nor1.z;
-            float d1 = nor1.x * pos1.x + nor1.y * pos1.y + nor1.z * pos1.z;
+            float det = glm::dot(n, n);
 
-            float a2 = nor2.x;
-            float b2 = nor2.y;
-            float c2 = nor2.z;
-            float d2 = nor2.x * pos2.x + nor2.y * pos2.y + nor2.z * pos2.z;
-
-            if(n.x != 0.0f)
+            if(det != 0.0)
             {
-                res.pos = glm::vec3(0, 
-                                    (c2 * d1 - c1 * d2) / (b2 * c1 - b1 * c2), 
-                                    (b2 * d1 - b1 * d2) / (b1 * c2 - b2 * c1)) / n.x;
+                res.pos = ((glm::cross(n, nor2) * -glm::dot(pos1, nor1)) + 
+                           (glm::cross(nor1, n) * -glm::dot(pos2, nor2))) / det;
+                res.dir = n;
             }
-            else if(n.y != 0.0f)
-            {
-                res.pos = glm::vec3((c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2), 
-                                    0,
-                                    (a2 * d1 - a1 * d2) / (a1 * c2 - a2 * c1)) / n.y;
-            }
-            else if(n.z != 0.0f)
-            {
-                res.pos = glm::vec3((b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1), 
-                                    (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1), 
-                                    0) / n.z;
-            }
-
-            res.dir = glm::normalize(n);
 
             return res;
         }
@@ -1013,134 +991,115 @@ namespace Engine3D
          * \arg t2_p1 - first 3D point of the second triangle
          * \arg t2_p2 - second 3D point of the second triangle
          * \arg t2_p3 - third 3D point of the second triangle
+         *
+         * \source - web.stanford.edu/class/cs277/resources/papers/Moller1997b.pdf
          */
         Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
                                 const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
         {
             Data res;
 
-            glm::vec3 plane1_nor = glm::normalize(glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1));
-            glm::vec3 plane2_nor = glm::normalize(glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1));
+            // construct infinite plane from the triangle 2
+            Plane p2 { t2_p1, glm::normalize(glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1)) };
 
-            Ray intersection_line = PlaneVsPlane(t1_p1, plane1_nor, t2_p1, plane2_nor);
+            // check on which side of the plane 2 vertices of triangle 1 are
+            float t1_p1d = glm::dot(p2.nor, t1_p1) - glm::dot(p2.pos, p2.nor); bool t1_p1s = t1_p1d > 0;
+            float t1_p2d = glm::dot(p2.nor, t1_p2) - glm::dot(p2.pos, p2.nor); bool t1_p2s = t1_p2d > 0;
+            float t1_p3d = glm::dot(p2.nor, t1_p3) - glm::dot(p2.pos, p2.nor); bool t1_p3s = t1_p3d > 0;
 
-            float t1_p1d = glm::dot(plane2_nor, t1_p1 - intersection_line.pos);
-            bool t1_p1s  = t1_p1d > 0; 
-            float t1_p2d = glm::dot(plane2_nor, t1_p2 - intersection_line.pos);
-            bool t1_p2s  = t1_p2d > 0;
-            float t1_p3d = glm::dot(plane2_nor, t1_p3 - intersection_line.pos);
-            bool t1_p3s  = t1_p3d > 0; 
-
-            float t2_p1d = glm::dot(plane1_nor, t2_p1 - intersection_line.pos);
-            bool t2_p1s  = t2_p1d > 0;
-            float t2_p2d = glm::dot(plane1_nor, t2_p2 - intersection_line.pos);
-            bool t2_p2s  = t2_p2d > 0;
-            float t2_p3d = glm::dot(plane1_nor, t2_p3 - intersection_line.pos);
-            bool t2_p3s  = t2_p3d > 0; 
-
-            if(( t1_p1s &&  t1_p2s &&  t1_p3s) ||
+            // if all triangle 1 vertices are on one side, there is no collision
+            if(( t1_p1s  && t1_p2s  && t1_p3s) ||
                (!t1_p1s && !t1_p2s && !t1_p3s))
             {
                 return res;
             }
 
-            if(( t2_p1s &&  t2_p2s &&  t2_p3s) ||
+            // construct infinity plane from the triange 1
+            Plane p1 { t1_p1, glm::normalize(glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1)) };
+
+            // check on which side of the plane 1 vertices of triangle 2 are
+            float t2_p1d = glm::dot(p1.nor, t2_p1) - glm::dot(p1.pos, p1.nor); bool t2_p1s = t2_p1d > 0;
+            float t2_p2d = glm::dot(p1.nor, t2_p2) - glm::dot(p1.pos, p1.nor); bool t2_p2s = t2_p2d > 0;
+            float t2_p3d = glm::dot(p1.nor, t2_p3) - glm::dot(p1.pos, p1.nor); bool t2_p3s = t2_p3d > 0;
+
+            // if all triangle 2 vertices are on one side, there is no collision
+            if(( t2_p1s  && t2_p2s  && t2_p3s) ||
                (!t2_p1s && !t2_p2s && !t2_p3s))
             {
                 return res;
             }
 
-            glm::vec3 ray_dir;
-            glm::vec3 ray_intersection;
+            // calculate intersection between planes
+            Ray intersection = PlaneVsPlane(p1, p2);
 
-            if((t1_p1s && !t1_p2s) || (t1_p2s && !t1_p1s))
+            // project all vertices onto the insersertion line
+            float t1_p1t = glm::dot(intersection.dir, t1_p1);
+            float t1_p2t = glm::dot(intersection.dir, t1_p2);
+            float t1_p3t = glm::dot(intersection.dir, t1_p3);
+
+            float t2_p1t = glm::dot(intersection.dir, t2_p1);
+            float t2_p2t = glm::dot(intersection.dir, t2_p2);
+            float t2_p3t = glm::dot(intersection.dir, t2_p3);
+
+            auto opposites = [](bool x, bool y)
             {
-            	ray_dir          = t1_p2 - t1_p1;
-            	ray_intersection = t1_p1 + RayVsPlane(t1_p1, ray_dir, t2_p1, plane2_nor).displacement;
+                return (x && !y) || (!x && y);
+            };
 
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
+            auto line_intersection = [](float t1, float t2, float d1, float d2)
+            {
+                return t1 + (t2 - t1) * (d1 / (d1 - d2));
+            };
 
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-                    //TODO: calculate displacement using dot product
-                    
-	            	res.occurred = true; return res;
-	            }
+            // calculate intervals where triangles intersect the plane intersection
+            float t1_int0;
+            float t1_int1;
+
+            float t2_int0;
+            float t2_int1;
+
+            if(opposites(t1_p1s, t1_p3s) && opposites(t1_p2s, t1_p3s))
+            {
+                t1_int0 = line_intersection(t1_p1t, t1_p3t, t1_p1d, t1_p3d);
+                t1_int1 = line_intersection(t1_p2t, t1_p3t, t1_p2d, t1_p3d);
             }
-            if((t1_p1s && !t1_p3s) || (t1_p3s && !t1_p1s))
+            else if(opposites(t1_p1s, t1_p2s) && opposites(t1_p3s, t1_p2s))
             {
-            	ray_dir          = t1_p3 - t1_p1;
-            	ray_intersection = t1_p1 + RayVsPlane(t1_p1, ray_dir, t2_p1, plane2_nor).displacement;
-
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
-
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-	            	res.occurred = true; return res;
-	            }
+                t1_int0 = line_intersection(t1_p1t, t1_p2t, t1_p1d, t1_p2d);
+                t1_int1 = line_intersection(t1_p3t, t1_p2t, t1_p3d, t1_p2d);
             }
-            if((t1_p2s && !t1_p3s) || (t1_p3s && !t1_p2s))
+            else if(opposites(t1_p2s, t1_p1s) && opposites(t1_p3s, t1_p1s))
             {
-            	ray_dir          = t1_p3 - t1_p2;
-            	ray_intersection = t1_p2 + RayVsPlane(t1_p2, ray_dir, t2_p1, plane2_nor).displacement;
-
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
-
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-	            	res.occurred = true; return res;
-	            }
+                t1_int0 = line_intersection(t1_p2t, t1_p1t, t1_p2d, t1_p1d);
+                t1_int1 = line_intersection(t1_p3t, t1_p1t, t1_p3d, t1_p1d);
             }
 
-            if((t2_p1s && !t2_p2s) || (t2_p2s && !t2_p1s))
+            if(opposites(t2_p1s, t2_p3s) && opposites(t2_p2s, t2_p3s))
             {
-            	ray_dir          = t2_p2 - t2_p1;
-            	ray_intersection = t2_p1 + RayVsPlane(t2_p1, ray_dir, t1_p1, plane1_nor).displacement;
-
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
-
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-	            	res.occurred = true; return res;
-	            }
+                t2_int0 = line_intersection(t2_p1t, t2_p3t, t2_p1d, t2_p3d);
+                t2_int1 = line_intersection(t2_p2t, t2_p3t, t2_p2d, t2_p3d);
             }
-            if((t2_p1s && !t2_p3s) || (t2_p3s && !t2_p1s))
+            else if(opposites(t2_p1s, t2_p2s) && opposites(t2_p3s, t2_p2s))
             {
-            	ray_dir          = t2_p3 - t2_p1;
-            	ray_intersection = t2_p1 + RayVsPlane(t2_p1, ray_dir, t1_p1, plane1_nor).displacement;
-
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
-
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-	            	res.occurred = true; return res;
-	            }
+                t2_int0 = line_intersection(t2_p1t, t2_p2t, t2_p1d, t2_p2d);
+                t2_int1 = line_intersection(t2_p3t, t2_p2t, t2_p3d, t2_p2d);
             }
-            if((t2_p2s && !t2_p3s) || (t2_p3s && !t2_p2s))
+            else if(opposites(t2_p2s, t2_p1s) && opposites(t2_p3s, t2_p1s))
             {
-            	ray_dir          = t2_p3 - t2_p2;
-            	ray_intersection = t2_p2 + RayVsPlane(t2_p2, ray_dir, t1_p1, plane1_nor).displacement;
-
-            	glm::vec3 bar = barycentric(t2_p1, t2_p2, t2_p3, ray_intersection);
-
-	            if (bar.x >= 0 && bar.x <= 1 &&
-	                bar.y >= 0 && bar.y <= 1 &&
-	                bar.z >= 0 && bar.z <= 1)
-	            {
-	            	res.occurred = true; return res;
-	            }
+                t2_int0 = line_intersection(t2_p2t, t2_p1t, t2_p2d, t2_p1d);
+                t2_int1 = line_intersection(t2_p3t, t2_p1t, t2_p3d, t2_p1d);
             }
-            
+
+            if(t1_int0 > t1_int1) { std::swap(t1_int0, t1_int1); }
+            if(t2_int0 > t2_int1) { std::swap(t2_int0, t2_int1); }
+
+            // if intervals overlap, there is a collision
+            if(t1_int0 > t2_int1 || t1_int1 < t2_int0)
+            {
+                return res;
+            }
+
+            res.occurred = true;
             return res;
         }
         Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2)
@@ -1148,7 +1107,10 @@ namespace Engine3D
             return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
         }
         
-        Data SAT(SceneObject* m1, SceneObject* m2)
+        /**
+         * mesh vs mesh using separating axes theorem algorithm
+         */
+        Data MeshVsMeshSeparatingAxesTheorem(SceneObject* m1, SceneObject* m2)
         {
             Data res;
 
@@ -1331,5 +1293,34 @@ namespace Engine3D
 
             return res;
         }
+    
+        /**
+         * mesh vs mesh
+         */
+         Data MeshVsMesh(SceneObject* m1, SceneObject* m2)
+         {
+            Data res;
+            
+            //extract vertices
+            const std::vector<Vertex>& m1_vertices = *m1->vertices();
+            const std::vector<Vertex>& m2_vertices = *m2->vertices();
+            
+            for(u32 i = 0; i < m1_vertices.size(); i += 3)
+            {
+                for(u32 j = 0; j < m2_vertices.size(); j += 3)
+                {
+                    Triangle t1 = m1->constructTriangle(i);
+                    Triangle t2 = m2->constructTriangle(j);
+                    
+                    res = TriangleVsTriangle(t1, t2);
+                    if(res)
+                    {
+                        return res;
+                    }
+                }
+            }
+             
+            return res;
+         }
     };
 };

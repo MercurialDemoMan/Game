@@ -37,7 +37,9 @@ namespace Engine3D
         u32 fna, fnb, fnc, fnd;
         u32 fta, ftb, ftc, ftd;
 
-        auto normalize_mesh = [](std::vector<Vertex>& vertices)
+        float furthest_vertex_value = 0.0f;
+
+        auto normalize_mesh = [&](std::vector<Vertex>& vertices)
         {
             if (vertices.size() == 0)
                 return;
@@ -83,6 +85,11 @@ namespace Engine3D
             for (auto& vertex : vertices)
             {
                 vertex.pos = vertex.pos * size_delta;
+                float vertex_delta = glm::dot(vertex.pos, vertex.pos);
+                if(vertex_delta > furthest_vertex_value)
+                {
+                    furthest_vertex_value = vertex_delta;
+                }
             }
         };
 
@@ -311,7 +318,8 @@ namespace Engine3D
 
         // create vao and vbo
         Vertices result;
-        result.size = vertices.size();
+        result.furthest_vertex_value = std::sqrt(furthest_vertex_value);
+        result.size                  = vertices.size();
         
         glGenVertexArrays(1, &result.vao);
         glGenBuffers(1, &result.vbo);
@@ -431,6 +439,21 @@ namespace Engine3D
         }
 
         return &(vertices->data);
+    }
+
+    /**
+     * get raw vertices
+     */
+    const Vertices* Mesh::rawVertices()
+    {
+        const Vertices* vertices = g_vertices_cache.peek(m_vertices_id);
+
+        if(vertices == nullptr)
+        {
+            vertices = g_vertices_cache.get(m_vertices_id);
+        }
+
+        return vertices;
     }
 
     /**

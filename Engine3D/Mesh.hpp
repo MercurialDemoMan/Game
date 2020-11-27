@@ -55,6 +55,7 @@ namespace Engine3D
         Material material;
         bool     has_material;
         std::vector<Vertex> data;
+        double   furthest_vertex_value;
     };
 
     /**
@@ -122,6 +123,11 @@ namespace Engine3D
         void bindVertexPositionWithShader(const Shader& shader, const char* attribute_name);
         void bindVertexNormalWithShader(const Shader& shader, const char* attribute_name);
         void bindVertexUVWithShader(const Shader& shader, const char* attribute_name);
+
+        /**
+         * get raw vertices
+         */
+        const Vertices* rawVertices();
         
     private:
 

@@ -15,15 +15,15 @@
 	},
 
 	{
-		"m" : "data/objects/cube.obj",
-		"x" : 0, "y" : -30, "z" : -20,
-		"s" : 6,
+		"m" : "data/objects/CarBody.obj",
+		"x" : 0, "y" : -30, "z" : 30,
+		"s" : 10,
 		"t" : 1
 	},
 
 	{
 		"m" : "data/objects/cube.obj",
-		"x" : 0, "y" : -30, "z" : -20,
+		"x" : 0, "y" : -30, "z" : 30,
 		"s" : 6,
 		"t" : 1
 	},
