@@ -259,32 +259,23 @@ void GameLogic::update(const float time_delta)
         
         //collision
 
-        glm::vec3 bakup = m_objects.back()->pos();
-        
-        m_objects.back()->pos().x =   0 + cos(m_time / 100.0f) * 10.0f;
-        m_objects.back()->pos().y = -30 + cos(m_time / 100.0f) * 10.0f;
-        m_objects.back()->pos().z =  30 + sin(m_time / 100.0f) * 5.0f;
-        
-        //m_objects.back()->pos().x = -10 + cos(m_time / 50.0f) * 5.0f;
-        //m_objects.back()->pos().y = -20 + cos(m_time / 100.0f) * 5.0f;
+        //m_objects.back()->pos().z =  30 + sin(m_time / 100.0f) * 5.0f;
 
-        m_objects.back()->rotate(0.005f, glm::vec3(0, 0.707, 0.707));
+        //m_objects.back()->rotate(0.005f, glm::vec3(0, 0.707, 0.707));
+        //m_objects[m_objects.size() - 2]->rotate(0.01, glm::vec3(0, 1, 0));
         
-        glm::vec3 mov = bakup - m_objects.back()->pos();
+        glm::vec3 mov = glm::vec3(0.1 * time_delta, 0, 0);
 
         Engine3D::Collision::Data r;
 
         if(Engine3D::Collision::BoxVsBox(m_objects[m_objects.size() - 1]->boundingBox(), m_objects[m_objects.size() - 2]->boundingBox()))
         {
-            std::printf("%f\n", m_time);
-            r = Engine3D::Collision::MeshVsMesh(m_objects[m_objects.size() - 1], m_objects[m_objects.size() - 2]);
+            r = Engine3D::Collision::MeshVsMeshSweep(m_objects[m_objects.size() - 1], mov, m_objects[m_objects.size() - 2]);
         }
 
         if(r)
         {
-            r.displacement = mov;
-            m_objects[m_objects.size() - 1]->pos() += r.displacement / 2.0f;
-            m_objects[m_objects.size() - 2]->pos() -= r.displacement / 2.0f;
+            m_objects[m_objects.size() - 1]->pos() += r.displacement;
 
             const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 0, 0);
             const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0, 0);
@@ -292,6 +283,8 @@ void GameLogic::update(const float time_delta)
         }
         else
         {
+            m_objects.back()->pos() += mov;
+
             const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 1, 1);
             const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0.2, 0.2);
             const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 1, 1);
@@ -576,7 +569,6 @@ void GameLogic::update(const float time_delta)
     };
     auto draw_hitboxes = [&]()
     {
-        /*
         glBegin(GL_LINES);
         glColor3f(1, 0, 0);
         glVertex3f(-1, 0, 0);
@@ -589,7 +581,6 @@ void GameLogic::update(const float time_delta)
         glVertex3f(0, 0, 1);
         glColor3f(1, 1, 1);
         glEnd();
-        */
         
         draw_hitbox(m_player.getPos(), m_player.dims());
         for (auto& object : m_objects)
@@ -621,33 +612,7 @@ void GameLogic::update(const float time_delta)
         glColor3f(1, 1, 1);
     };
     
-    //draw_hitboxes();
-
-    auto lul = []()
-    {
-        Engine3D::Plane p1 { glm::vec3(0), glm::vec3(0.707, 0.707, 0) };
-        
-        Engine3D::Plane p2 { glm::vec3(5), glm::vec3(0, 0, -1) };
-
-        
-
-        Engine3D::Ray ray_res = Engine3D::Collision::PlaneVsPlane(p1, p2);
-
-        glBegin(GL_LINES);
-        glColor3f(1, 0, 0);
-        glVertex3f(p1.pos.x, p1.pos.y, p1.pos.z);
-        glVertex3f(p1.pos.x + p1.nor.x, p1.pos.y + p1.nor.y, p1.pos.z + p1.nor.z);
-        glColor3f(0, 1, 0);
-        glVertex3f(p2.pos.x, p2.pos.y, p2.pos.z);
-        glVertex3f(p2.pos.x + p2.nor.x, p2.pos.y + p2.nor.y, p2.pos.z + p2.nor.z);
-        glColor3f(0, 0, 1);
-        glVertex3f(ray_res.pos.x, ray_res.pos.y, ray_res.pos.z);
-        glVertex3f(ray_res.pos.x + ray_res.dir.x, ray_res.pos.y + ray_res.dir.y, ray_res.pos.z + ray_res.dir.z);
-        glEnd();
-        glColor3f(1, 1, 1);
-    };
-
-    lul();
+    draw_hitboxes();
 
     //draw skybox
     m_skybox_shader.use();

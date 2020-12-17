@@ -15,7 +15,7 @@
 	},
 
 	{
-		"m" : "data/objects/CarBody.obj",
+		"m" : "data/objects/halo.obj",
 		"x" : 0, "y" : -30, "z" : 30,
 		"s" : 10,
 		"t" : 1
@@ -23,8 +23,8 @@
 
 	{
 		"m" : "data/objects/cube.obj",
-		"x" : 0, "y" : -30, "z" : 30,
-		"s" : 6,
+		"x" : -50, "y" : -30, "z" : 30,
+		"s" : 2,
 		"t" : 1
 	},
 }

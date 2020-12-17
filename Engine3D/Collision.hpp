@@ -274,7 +274,11 @@ namespace Engine3D
         Data TriangleVsTriangle(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3,
                                 const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
         Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);
-        
+        Ray LineVsLineMin(const glm::vec3& l1_p1, const glm::vec3& l1_p2, const glm::vec3& l2_p1, const glm::vec3& l2_p2);
+        Ray LineVsLineMin(const Line& l1, const Line& l2);
+        Data TriangleVsTriangleSweep(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3, const glm::vec3& velocity,
+                                     const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
+        Data TriangleVsTriangleSweep(const Triangle& t1, const glm::vec3& velocity, const Triangle& t2);
         /**
          * mesh vs mesh using separating axes theorem algorithm
          */
@@ -283,6 +287,7 @@ namespace Engine3D
         /**
          * mesh vs mesh
          */
-         Data MeshVsMesh(SceneObject* m1, SceneObject* m2);
+        Data MeshVsMesh(SceneObject* m1, SceneObject* m2);
+        Data MeshVsMeshSweep(SceneObject* m1, const glm::vec3& velocity, SceneObject* m2);
     };
 };

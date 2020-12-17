@@ -1106,6 +1106,175 @@ namespace Engine3D
         {
             return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
         }
+        Ray LineVsLineMin(const glm::vec3& l1_p1, const glm::vec3& l1_p2, const glm::vec3& l2_p1, const glm::vec3& l2_p2)
+        {
+            glm::vec3 delta    = l1_p1 - l2_p1;
+
+            glm::vec3 delta_l2 = l2_p2 - l2_p1;
+            glm::vec3 delta_l1 = l1_p2 - l1_p1;
+
+            float d1 = glm::dot(delta,    delta_l2);
+            float d2 = glm::dot(delta_l2, delta_l1);
+            float d3 = glm::dot(delta,    delta_l1);
+
+            float d4 = glm::dot(delta_l2, delta_l2);
+            float d5 = glm::dot(delta_l1, delta_l1);
+
+            float denominator = d5 * d4 - d2 * d2;
+            if (denominator == 0.0f)
+            {
+                return Ray(glm::vec3(0), glm::vec3(std::numeric_limits<float>::infinity()));
+            }
+            float numerator = d1 * d2 - d3 * d4;
+
+            float  arg1 = numerator / denominator;
+            float  arg2 = (d1 + d2 * (arg1)) / d4;
+
+            return Ray(l1_p1 + arg1 * delta_l1, (l2_p1 + arg2 * delta_l2) - (l1_p1 + arg1 * delta_l1));
+        }
+        Ray LineVsLineMin(const Line& l1, const Line& l2)
+        {
+            return LineVsLineMin(l1.p1, l1.p2, l2.p1, l2.p2);
+        }
+        Data TriangleVsTriangleSweep(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3, const glm::vec3& velocity,
+                                     const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
+        {
+            Data res;
+
+            // construct infinite plane from the triangle 2
+            Plane p2 { t2_p1, glm::normalize(glm::cross(t2_p2 - t2_p1, t2_p3 - t2_p1)) };
+
+            res = RayVsPlane(t1_p1, velocity, p2.pos, p2.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t2_p1, t2_p2, t2_p3, t1_p1 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    return res;
+                }
+                else
+                {
+                    res.occurred     = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            res = RayVsPlane(t1_p2, velocity, p2.pos, p2.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t2_p1, t2_p2, t2_p3, t1_p2 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    return res;
+                }
+                else
+                {
+                    res.occurred     = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            res = RayVsPlane(t1_p3, velocity, p2.pos, p2.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t2_p1, t2_p2, t2_p3, t1_p3 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    return res;
+                }
+                else
+                {
+                    res.occurred     = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            // construct infinite plane from the triangle 1
+            Plane p1 { t1_p1, glm::normalize(glm::cross(t1_p2 - t1_p1, t1_p3 - t1_p1)) };
+
+            res = RayVsPlane(t2_p1, velocity, p1.pos, p1.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t1_p1, t1_p2, t1_p3, t2_p1 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    res.displacement = -res.displacement;
+                    return res;
+                }
+                else
+                {
+                    res.occurred     = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            res = RayVsPlane(t2_p2, velocity, p1.pos, p1.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t1_p1, t1_p2, t1_p3, t2_p2 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    res.displacement = -res.displacement;
+                    return res;
+                }
+                else
+                {
+                    res.occurred = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            res = RayVsPlane(t2_p3, velocity, p1.pos, p1.nor);
+            if (res)
+            {
+                glm::vec3 test = barycentric(t1_p1, t1_p2, t1_p3, t2_p3 + res.displacement);
+
+                if (test.x >= 0.0f && test.x <= 1.0f &&
+                    test.y >= 0.0f && test.y <= 1.0f &&
+                    test.z >= 0.0f && test.z <= 1.0f)
+                {
+                    res.displacement = -res.displacement;
+                    return res;
+                }
+                else
+                {
+                    res.occurred = false;
+                    res.displacement = glm::vec3(0);
+                }
+            }
+
+            Ray r1_start = LineVsLineMin(t1_p1, t1_p2, t2_p1, t2_p2);
+            Ray r1_end   = LineVsLineMin(t1_p1 + velocity, t1_p2, t2_p1 + velocity, t2_p2);
+
+            if (glm::dot(t2_p2 - t2_p1, r1_start.pos) > 0 != glm::dot(t2_p2 - t2_p1, r1_end.pos) > 0)
+            {
+                res.occurred     = true;
+                res.displacement = r1_start.dir;
+                return res;
+            }
+
+
+            return res;
+        }
+        Data TriangleVsTriangleSweep(const Triangle& t1, const glm::vec3& velocity, const Triangle& t2)
+        {
+            return TriangleVsTriangleSweep(t1.p1, t1.p2, t1.p3, velocity, t2.p1, t2.p2, t2.p3);
+        }
         
         /**
          * mesh vs mesh using separating axes theorem algorithm
@@ -1321,6 +1490,32 @@ namespace Engine3D
             }
              
             return res;
+         }
+
+         Data MeshVsMeshSweep(SceneObject* m1, const glm::vec3& velocity, SceneObject* m2)
+         {
+             Data res;
+
+             //extract vertices
+             const std::vector<Vertex>& m1_vertices = *m1->vertices();
+             const std::vector<Vertex>& m2_vertices = *m2->vertices();
+
+             for (u32 i = 0; i < m1_vertices.size(); i += 3)
+             {
+                 for (u32 j = 0; j < m2_vertices.size(); j += 3)
+                 {
+                     Triangle t1 = m1->constructTriangle(i);
+                     Triangle t2 = m2->constructTriangle(j);
+
+                     res = TriangleVsTriangleSweep(t1, velocity, t2);
+                     if (res)
+                     {
+                         return res;
+                     }
+                 }
+             }
+
+             return res;
          }
     };
 };
