@@ -11,8 +11,6 @@
 #include <SDL2/SDL_image.h>
 #include <GL/glew.h>
 
-
-
 namespace Engine3D
 {
     /**
@@ -320,6 +318,24 @@ namespace Engine3D
         Vertices result;
         result.furthest_vertex_value = std::sqrt(furthest_vertex_value);
         result.size                  = vertices.size();
+        result.partitions.resize(DivisionFactor * DivisionFactor * DivisionFactor);
+
+        // divide the mesh into subspaces
+        for (u32 i = 0; i < vertices.size(); i++)
+        {
+            glm::vec3 translated_pos = (vertices[i].pos + 1.0f) / 2.0f;
+
+            u32 x = translated_pos.x * DivisionFactor; if (x == DivisionFactor) { x = DivisionFactor - 1; }
+            u32 y = translated_pos.y * DivisionFactor; if (y == DivisionFactor) { y = DivisionFactor - 1; }
+            u32 z = translated_pos.z * DivisionFactor; if (z == DivisionFactor) { z = DivisionFactor - 1; }
+
+            result.partitions[x + DivisionFactor * (y + DivisionFactor * z)].push_back(i);
+        }
+
+        for (auto& v : result.partitions)
+        {
+            std::printf("Mesh() log: partition: %u\n", v.size());
+        }
         
         glGenVertexArrays(1, &result.vao);
         glGenBuffers(1, &result.vbo);

@@ -289,5 +289,6 @@ namespace Engine3D
          */
         Data MeshVsMesh(SceneObject* m1, SceneObject* m2);
         Data MeshVsMeshSweep(SceneObject* m1, const glm::vec3& velocity, SceneObject* m2);
+        Data MeshVsMeshPartial(SceneObject* m1, SceneObject* m2);
     };
 };

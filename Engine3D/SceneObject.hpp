@@ -90,6 +90,22 @@ namespace Engine3D
         	); 
         }
 
+        Engine3D::Box getDivisionBox(u32 x, u32 y, u32 z)
+        {
+            glm::vec3 translated_pos = (glm::vec3(x, y, z) / float(DivisionFactor)) + (1.0f / DivisionFactor) / 2.0f;
+            return Engine3D::Box(m_pos + translated_pos, glm::vec3(1.0f / DivisionFactor));
+        }
+
+        const std::vector<u32>& getDivision(u32 x, u32 y, u32 z)
+        {
+            if (x >= DivisionFactor || y >= DivisionFactor || z >= DivisionFactor)
+            {
+                return { };
+            }
+
+            return m_mesh.rawVertices()->partitions[x + DivisionFactor * (y + DivisionFactor * z)];
+        }
+
         /**
          * deletes the data saved in ram
          */

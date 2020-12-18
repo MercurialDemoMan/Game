@@ -1139,6 +1139,7 @@ namespace Engine3D
         Data TriangleVsTriangleSweep(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3, const glm::vec3& velocity,
                                      const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
         {
+            
             Data res;
 
             // construct infinite plane from the triangle 2
@@ -1267,7 +1268,6 @@ namespace Engine3D
                 res.displacement = r1_start.dir;
                 return res;
             }
-
 
             return res;
         }
@@ -1511,6 +1511,65 @@ namespace Engine3D
                      if (res)
                      {
                          return res;
+                     }
+                 }
+             }
+
+             return res;
+         }
+
+         Data MeshVsMeshPartial(SceneObject* m1, SceneObject* m2)
+         {
+             Data res;
+
+             // go through every subspace of the first object
+             for (u32 z1 = 0; z1 < DivisionFactor; z1++)
+             {
+                 for (u32 y1 = 0; y1 < DivisionFactor; y1++)
+                 {
+                     for (u32 x1 = 0; x1 < DivisionFactor; x1++)
+                     {
+                         //construct a subspace bounding box
+                         Box box1 = m1->getDivisionBox(x1, y1, z1);
+
+                         // go through every subspace of the second object
+                         for (u32 z2 = 0; z2 < DivisionFactor; z2++)
+                         {
+                             for (u32 y2 = 0; y2 < DivisionFactor; y2++)
+                             {
+                                 for (u32 x2 = 0; x2 < DivisionFactor; x2++)
+                                 {
+                                     Box box2 = m2->getDivisionBox(x2, y2, z2);
+
+                                     //if them two boxes are overlapping -> potential collision
+                                     if (Collision::BoxVsBox(box1, box2))
+                                     {
+                                         const std::vector<u32> partial_division1 = m1->getDivision(x1, y1, z1);
+                                         const std::vector<u32> partial_division2 = m2->getDivision(x2, y2, z2);
+                                     
+                                         return res;
+
+                                         for (u32 i = 0; i < partial_division1.size(); i++)
+                                         {
+                                             for (u32 j = 0; j < partial_division2.size(); j++)
+                                             {
+                                                 u32 index1 = partial_division1[i];
+                                                 u32 index2 = partial_division2[j];
+
+                                                 Triangle t1 = m1->constructTriangle(index1 - (index1 % 3));
+                                                 Triangle t2 = m2->constructTriangle(index2 - (index2 % 3));
+
+                                                 res = TriangleVsTriangle(t1, t2);
+                                                 if (res)
+                                                 {
+                                                     return res;
+                                                 }
+                                             }
+                                         }
+                                     }
+                                 }
+                             }
+                         }
                      }
                  }
              }

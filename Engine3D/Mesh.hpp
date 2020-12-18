@@ -12,6 +12,8 @@
 
 namespace Engine3D
 {
+    static constexpr Engine3D::u32 DivisionFactor = 2;
+
     /**
      * vertex structure
      */
@@ -55,6 +57,7 @@ namespace Engine3D
         Material material;
         bool     has_material;
         std::vector<Vertex> data;
+        std::vector<std::vector<u32>> partitions;
         double   furthest_vertex_value;
     };
 
