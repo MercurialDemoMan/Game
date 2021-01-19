@@ -27,6 +27,7 @@
 #include "BillboardObject.hpp"
 #include "Sprite.hpp"
 #include "Game.hpp"
+#include "Random.hpp"
 
 #ifdef main
 #undef main

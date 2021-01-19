@@ -9,22 +9,26 @@
 	
 	{
 		"m" : "data/objects/ball.obj",
-		"x" : 0, "y" : -48, "z" : -20,
+		"x" : 0, "y" : -40, "z" : -20,
+		"s" : 3,
+		"t" : 3
+	},
+    {
+		"m" : "data/objects/ball.obj",
+		"x" : 10, "y" : -35, "z" : -20,
 		"s" : 4,
 		"t" : 3
 	},
-
-	{
-		"m" : "data/objects/halo.obj",
-		"x" : 0, "y" : -30, "z" : 30,
-		"s" : 10,
-		"t" : 1
+    {
+		"m" : "data/objects/ball.obj",
+		"x" : -10, "y" : -40, "z" : -20,
+		"s" : 4,
+		"t" : 3
 	},
-
-	{
-		"m" : "data/objects/cube.obj",
-		"x" : -50, "y" : -30, "z" : 30,
-		"s" : 2,
-		"t" : 1
+    {
+		"m" : "data/objects/ball.obj",
+		"x" : -10, "y" : -32, "z" : -30,
+		"s" : 3,
+		"t" : 3
 	},
 }

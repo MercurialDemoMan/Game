@@ -1136,10 +1136,52 @@ namespace Engine3D
         {
             return LineVsLineMin(l1.p1, l1.p2, l2.p1, l2.p2);
         }
+        Data LineVsTriangle(const glm::vec3& l_p1, const glm::vec3& l_p2, const glm::vec3& t_p1, const glm::vec3& t_p2, const glm::vec3& t_p3)
+        {
+            Data res;
+
+            glm::vec3 t_normal = glm::normalize(glm::cross(t_p2 - t_p1, t_p3 - t_p1));
+
+            float delta_start = glm::dot((l_p1 - t_p1), t_normal);
+            float delta_end   = glm::dot((l_p2 - t_p1), t_normal);
+
+            if ((delta_start > 0 && delta_end < 0) || (delta_start < 0 && delta_end > 0))
+            {
+                return res;
+            }
+
+            glm::vec3 intersection = ((delta_start * l_p2) - (delta_end * l_p1)) / (delta_start - delta_end);
+
+            if (glm::dot((intersection - t_p1), glm::cross(t_p3 - t_p1, t_normal)) > 0)
+            {
+                res.occurred = true;
+                res.displacement = intersection - l_p1;
+                return res;
+            }
+
+            if (glm::dot((intersection - t_p2), glm::cross(t_p1 - t_p2, t_normal)) > 0)
+            {
+                res.occurred = true;
+                res.displacement = intersection - l_p1;
+                return res;
+            }
+
+            if (glm::dot((intersection - t_p3), glm::cross(t_p2 - t_p3, t_normal)) > 0)
+            {
+                res.occurred = true;
+                res.displacement = intersection - l_p1;
+                return res;
+            }
+
+            return res;
+        }
+        Data LineVsTriangle(const Line& l, const Triangle& t)
+        {
+            return LineVsTriangle(l.p1, l.p2, t.p1, t.p2, t.p3);
+        }
         Data TriangleVsTriangleSweep(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3, const glm::vec3& velocity,
                                      const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3)
         {
-            
             Data res;
 
             // construct infinite plane from the triangle 2
@@ -1544,8 +1586,8 @@ namespace Engine3D
                                      //if them two boxes are overlapping -> potential collision
                                      if (Collision::BoxVsBox(box1, box2))
                                      {
-                                         const std::vector<u32> partial_division1 = m1->getDivision(x1, y1, z1);
-                                         const std::vector<u32> partial_division2 = m2->getDivision(x2, y2, z2);
+                                         const std::vector<u32>& partial_division1 = m1->getDivision(x1, y1, z1);
+                                         const std::vector<u32>& partial_division2 = m2->getDivision(x2, y2, z2);
                                      
                                          return res;
 

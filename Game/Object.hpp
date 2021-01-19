@@ -57,7 +57,13 @@ public:
 
     void setupVertexAttributes(const Engine3D::Shader& shader);
 
+    glm::vec3& mov() { return m_mov; }
+    glm::vec3& col() { return m_col; }
+
 private:
+
+    glm::vec3                 m_mov { 0 };
+    glm::vec3                 m_col { 1 };
 
     HitboxType                m_hitbox_type { HitboxType::None };
     std::function<void(void)> m_collision_trigger;

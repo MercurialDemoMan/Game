@@ -43,7 +43,8 @@ Engine3D/Sound.cpp
 Engine3D/Sprite.cpp
 Engine3D/System.cpp
 Engine3D/Text.cpp
-Engine3D/Texture.cpp)
+Engine3D/Texture.cpp
+Engine3D/Random.cpp)
 
 target_include_directories(Game PUBLIC ${CMAKE_SOURCE_DIR})
 

@@ -276,6 +276,8 @@ namespace Engine3D
         Data TriangleVsTriangle(const Triangle& t1, const Triangle& t2);
         Ray LineVsLineMin(const glm::vec3& l1_p1, const glm::vec3& l1_p2, const glm::vec3& l2_p1, const glm::vec3& l2_p2);
         Ray LineVsLineMin(const Line& l1, const Line& l2);
+        Data LineVsTriangle(const glm::vec3& l_p1, const glm::vec3& l_p2, const glm::vec3& t_p1, const glm::vec3& t_p2, const glm::vec3& t_p3);
+        Data LineVsTriangle(const Line& l, const Triangle& t);
         Data TriangleVsTriangleSweep(const glm::vec3& t1_p1, const glm::vec3& t1_p2, const glm::vec3& t1_p3, const glm::vec3& velocity,
                                      const glm::vec3& t2_p1, const glm::vec3& t2_p2, const glm::vec3& t2_p3);
         Data TriangleVsTriangleSweep(const Triangle& t1, const glm::vec3& velocity, const Triangle& t2);

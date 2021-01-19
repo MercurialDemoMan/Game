@@ -3,7 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
@@ -12,20 +11,6 @@
  */
 void GameLogic::init()
 {
-    float c_off = -10;
-
-    glm::vec3 c_t1p1 { -2 + c_off, 0, 0 };
-    glm::vec3 c_t1p2 { 5 + c_off, 0, 5 };
-    glm::vec3 c_t1p3 { 5 + c_off, 0, -5 };
-
-    glm::vec3 c_t2p1 { -10, -10, 0 };
-    glm::vec3 c_t2p2 { +10, -10, 0 };
-    glm::vec3 c_t2p3 { +10, +10, 0 };
-
-    Engine3D::Collision::Data r = Engine3D::Collision::TriangleVsTriangle(c_t1p1, c_t1p2, c_t1p3, c_t2p1, c_t2p2, c_t2p3);
-    if(r)
-        std::printf("yes\n");
-        //std::printf("r: %f, %f, %f\n", r.displacement.x, r.displacement.y, r.displacement.z);
 
     this->setVSync(Engine3D::Game::VSync::On);
 
@@ -100,6 +85,15 @@ void GameLogic::init()
                 m_objects.back()->setupVertexAttributes(m_obj_shader);
             });
 
+            for (Engine3D::u32 i = 0; i < 20; i++)
+            {
+                m_objects.push_back(new Object(glm::vec3(0 + Engine3D::Random::uniform(-10, 10), -40 + Engine3D::Random::uniform(-10, 10), -20 + Engine3D::Random::uniform(-10, 10)), "data/objects/ball.obj"));
+                m_objects.back()->scale() = glm::vec3(2 + Engine3D::Random::uniform(0, 5));
+                m_objects.back()->hitbox() = Object::HitboxType::Ball;
+                m_objects.back()->setupVertexAttributes(m_obj_shader);
+                m_objects.back()->col() = glm::vec3(Engine3D::Random::uniform(), Engine3D::Random::uniform(), Engine3D::Random::uniform());
+            }
+
         }, "GameLogic::Engine3D_init()");
 
     //load skybox
@@ -150,11 +144,6 @@ void GameLogic::init()
 
     m_spatial_partition.update(m_triangles);
 
-    for (auto& object : m_objects)
-    {
-        //object->discardVertices();
-    }
-
     std::printf("GameLogic() log: spatial partitions constructed\n");
 }
 
@@ -179,8 +168,6 @@ void GameLogic::update(const float time_delta)
 
     if(m_pause == false)
     {
-        
-
         //TODO: update time
         m_time += (float)fmod(1.0f * time_delta, M_PI * 2.0);
 
@@ -189,18 +176,8 @@ void GameLogic::update(const float time_delta)
         bool  player_prev_on_ground = m_player.on_ground();
 
         //apply gravity to the player
-        //m_player.mov().y -= Player::Gravity;
-        //m_player.mov().y  = std::clamp(m_player.mov().y, -Player::MaxVerticalSpeed, Player::MaxVerticalSpeed);
-
-        m_player.mov().y = 0;
-        if(this->keyDown(Engine3D::Game::Key::LSHIFT))
-        {
-            m_player.mov().y = -0.5;
-        }
-        if(this->keyDown(Engine3D::Game::Key::SPACE))
-        {
-            m_player.mov().y = 0.5;
-        }
+        m_player.mov().y -= Player::Gravity;
+        m_player.mov().y  = std::clamp(m_player.mov().y, -Player::MaxVerticalSpeed, Player::MaxVerticalSpeed);
 
         m_player.addPos(glm::vec3(0, m_player.mov().y * time_delta * time_delta, 0));
 
@@ -259,36 +236,51 @@ void GameLogic::update(const float time_delta)
         
         //collision
 
-        //m_objects.back()->pos().z =  30 + sin(m_time / 100.0f) * 5.0f;
-
-        //m_objects.back()->rotate(0.005f, glm::vec3(0, 0.707, 0.707));
-        //m_objects[m_objects.size() - 2]->rotate(0.01, glm::vec3(0, 1, 0));
-        
-        glm::vec3 mov = glm::vec3(0.1 * time_delta, 0, 0);
-
-        Engine3D::Collision::Data r;
-
-        if(Engine3D::Collision::BoxVsBox(m_objects[m_objects.size() - 1]->boundingBox(), m_objects[m_objects.size() - 2]->boundingBox()))
+        for (u32 i = 0; i < m_objects.size(); i++)
         {
-            r = Engine3D::Collision::MeshVsMeshSweep(m_objects[m_objects.size() - 1], mov, m_objects[m_objects.size() - 2]);
+            Object* obj = m_objects[i];
+
+            if (obj->hitbox() == Object::HitboxType::Ball)
+            {
+                obj->mov() += glm::vec3(0, -0.01 * time_delta, 0);
+                obj->pos() += obj->mov() * time_delta;
+
+                
+                for (u32 j = 0; j < m_objects.size(); j++)
+                {
+                    if (j != i)
+                    {
+                        if (m_objects[j]->hitbox() == Object::HitboxType::Ball)
+                        {
+                            Engine3D::Collision::Data res = Engine3D::Collision::BallVsBall(obj->pos(), obj->scale().x / 2, m_objects[j]->pos(), m_objects[j]->scale().x / 2);
+
+                            if (res)
+                            {
+                                obj->pos() += res.displacement / 2.0f;
+                                obj->mov()  = glm::reflect(obj->mov(), glm::normalize(res.displacement)) * 0.9f;
+                                m_objects[j]->pos() -= res.displacement / 2.0f;
+                                m_objects[j]->mov()  = glm::reflect(m_objects[j]->mov(), glm::normalize(res.displacement)) * 0.9f;
+                            }
+                        }
+                    }
+                }
+
+                auto triangles = m_spatial_partition.get(obj->pos());
+
+                if (triangles)
+                {
+                    for (auto& triangle : *triangles)
+                    {
+                        Engine3D::Collision::Data collision = Engine3D::Collision::BallVsTriangle(obj->pos(), obj->scale().x / 2.0, triangle->p1, triangle->p2, triangle->p3);
+                        if (collision)
+                        {
+                            obj->pos() += collision.displacement;
+                            obj->mov()  = glm::reflect(obj->mov(), glm::normalize(collision.displacement));
+                        }
+                    }
+                }
+            }
         }
-
-        if(r)
-        {
-            m_objects[m_objects.size() - 1]->pos() += r.displacement;
-
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 0, 0);
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0, 0);
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 0, 0);
-        }
-        else
-        {
-            m_objects.back()->pos() += mov;
-
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->diffuse = glm::vec3(1, 1, 1);
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->ambient = glm::vec3(0.2, 0.2, 0.2);
-            const_cast<Engine3D::Material*>(m_objects.back()->material())->specular = glm::vec3(1, 1, 1);
-        }    
 
         glm::vec3 collision_result(0);
 
@@ -297,13 +289,11 @@ void GameLogic::update(const float time_delta)
 
         if (triangles != nullptr)
         {
-            
             for (auto& triangle : *triangles)
             {
                 glm::vec3 collision = Engine3D::Collision::EllipsoidVsTriangle(m_player.getPos(), m_player.dims(), triangle->p1, triangle->p2, triangle->p3).displacement;
                 m_player.addPos(collision);
                 collision_result += collision;
-                //if(collision_result != glm::vec3(0)) { break; }
             }
         }
 
@@ -316,13 +306,9 @@ void GameLogic::update(const float time_delta)
                 //Box vs Box
                 case Object::HitboxType::Box:
                 {
-                    //Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBox(m_player.getPos(), m_player.dims(), object->pos(), object->dims());
-                    //Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBoxSweep(m_player.getPos(), m_player.dims(), m_player.mov(), object->pos(), object->dims());
-                    
                     Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBox(m_player.getPos(), m_player.dims(), object->pos(), object->dims());
                     if (collision_data.occurred)
                     {
-                        //std::printf("%f, %f, %f\n", collision_data.displacement.x, collision_data.displacement.y, collision_data.displacement.z);
                         collision = collision_data.displacement;
                     }
                     break;
@@ -650,9 +636,9 @@ void GameLogic::update(const float time_delta)
                 m_obj_shader.set1b(false, "has_uv_map");
             }
 
-            m_obj_shader.set3f(object->material()->ambient, "material_ambient");
-            m_obj_shader.set3f(object->material()->diffuse, "material_diffuse");
-            m_obj_shader.set3f(object->material()->specular, "material_specular");
+            m_obj_shader.set3f(object->material()->ambient * object->col(), "material_ambient");
+            m_obj_shader.set3f(object->material()->diffuse * object->col(), "material_diffuse");
+            m_obj_shader.set3f(object->material()->specular * object->col(), "material_specular");
         }
         else
         {
@@ -669,7 +655,7 @@ void GameLogic::update(const float time_delta)
         m_obj_shader.set1f(4, "material_shininess");
         m_obj_shader.set2f(this->getDims(), "dims");
         m_obj_shader.set1f(1, "reflection_strength");
-        m_obj_shader.set3f(m_player.getPos(), "light_pos");
+        m_obj_shader.set3f(m_light->pos()/*m_player.getPos()*/, "light_pos");
         m_obj_shader.set4x4m(m_player.getCam().getRotationMatrix(), "rot_mat");
         m_obj_shader.set4x4m(m_player.getCam().getViewMatrix(), "view_mat");
         m_obj_shader.set1f(m_time / 100.0f, "time");
