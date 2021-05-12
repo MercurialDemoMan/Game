@@ -1,4 +1,21 @@
+/*
+This file is part of Game.
+
+Game is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Game.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "GameLogic.hpp"
+#include "Bullet.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -16,31 +33,25 @@ void GameLogic::init()
 
     this->setBackgroundColor(0.05f, 0.05f, 0.2f);
 
-    m_player.reset();
     this->setMouseAnchor(this->getDims() / 2.f);
-
+    
     //initialize spatial partition for static triangles
-    m_spatial_partition.init(Engine3D::SpatialPartition<Engine3D::Triangle>::DefaultCellSize, [this](const Engine3D::Triangle& triangle) -> Engine3D::BoundingBox
+    m_spatial_partition.init(Engine3D::SpatialPartition<Asteroid>::DefaultCellSize, [this](const Asteroid& a) -> Engine3D::BoundingBox
         {
             Engine3D::BoundingBox r;
-            
-            r.min.x = std::min(triangle.p1.x, std::min(triangle.p2.x, triangle.p3.x)) - m_player.dims().y;
-            r.min.y = std::min(triangle.p1.y, std::min(triangle.p2.y, triangle.p3.y)) - m_player.dims().y;
-            r.min.z = std::min(triangle.p1.z, std::min(triangle.p2.z, triangle.p3.z)) - m_player.dims().y;
 
-            r.max.x = std::max(triangle.p1.x, std::max(triangle.p2.x, triangle.p3.x)) + m_player.dims().y;
-            r.max.y = std::max(triangle.p1.y, std::max(triangle.p2.y, triangle.p3.y)) + m_player.dims().y;
-            r.max.z = std::max(triangle.p1.z, std::max(triangle.p2.z, triangle.p3.z)) + m_player.dims().y;
+            r.min = a.get_pos() - (a.get_dims() * a.get_scale());
+            r.max = a.get_pos() + (a.get_dims() * a.get_scale());
 
             return r;
         });
-
+        
     //load shaders
     Engine3D::inline_try<std::runtime_error>([&]
         {
             m_obj_shader.init("data/shaders/objects.vert", "data/shaders/objects.frag");
             m_image_shader.init("data/shaders/image.vert", "data/shaders/image.frag");
-            m_skybox_shader.init("data/shaders/skybox.vert", "data/shaders/skybox_shapes.frag");
+            m_skybox_shader.init("data/shaders/skybox.vert", "data/shaders/skybox_clouds.frag");
             m_post_outline_shader.init("data/shaders/scene_post.vert", "data/shaders/scene_post_outline.frag");
         }, "GameLogic::Engine3D_init()");
     
@@ -48,8 +59,15 @@ void GameLogic::init()
     Engine3D::inline_try<std::runtime_error>([&]
         {
             m_light = new Light(glm::vec3(0), "data/textures/light.png");
-            m_light->scale() *= 0.01;
-            //m_light->diffuse_color() = m_light->specular_color() = glm::vec3(0.8f, 0.2f, 0.2f);
+            m_light->scale() *= 0.001;
+            m_light->diffuse_color() = m_light->specular_color() = glm::vec3(0.9, 0.1, 0.5);
+
+            for (u32 i = 0; i < m_player_trail.size(); i++)
+            {
+                m_player_trail[i] = new Light(glm::vec3(0), "data/textures/light.png");
+                m_player_trail[i]->scale() *= 0.001;
+                m_player_trail[i]->diffuse_color() = m_light->specular_color() = glm::vec3(0.9, 0.1, 0.5);
+            }
         }, "GameLogic::Engine3D_init()");
 
     //load textures
@@ -62,89 +80,86 @@ void GameLogic::init()
             m_skybox_noise.init("data/textures/noise256.png");
         }, "GameLogic::Engine3D_init()");
 
-    //load level
-    Engine3D::inline_try<std::runtime_error>([&]
-        {
-            //TODO: load level in correct json format
-            Engine3D::JSONDocument json("data/levels/test.json");
-
-            Engine3D::JSONObject& o = json["objects"];
-
-            o.for_each_object([&](Engine3D::JSONObject& world_object)
-            {
-                glm::vec3    object_pos   = glm::vec3(world_object["x"].number_data(), 
-                                                      world_object["y"].number_data(), 
-                                                      world_object["z"].number_data());
-                float        object_dim   = world_object["s"].number_data();
-                std::string& object_model = world_object["m"].string_data();
-                Object::HitboxType object_type = static_cast<Object::HitboxType>((u32)world_object["t"].number_data());
-
-                m_objects.push_back(new Object(object_pos, object_model));
-                m_objects.back()->scale()  = m_objects.back()->dims() = glm::vec3(object_dim);
-                m_objects.back()->hitbox() = object_type;
-                m_objects.back()->setupVertexAttributes(m_obj_shader);
-            });
-
-            for (Engine3D::u32 i = 0; i < 20; i++)
-            {
-                m_objects.push_back(new Object(glm::vec3(0 + Engine3D::Random::uniform(-10, 10), -40 + Engine3D::Random::uniform(-10, 10), -20 + Engine3D::Random::uniform(-10, 10)), "data/objects/ball.obj"));
-                m_objects.back()->scale() = glm::vec3(2 + Engine3D::Random::uniform(0, 5));
-                m_objects.back()->hitbox() = Object::HitboxType::Ball;
-                m_objects.back()->setupVertexAttributes(m_obj_shader);
-                m_objects.back()->col() = glm::vec3(Engine3D::Random::uniform(), Engine3D::Random::uniform(), Engine3D::Random::uniform());
-            }
-
-        }, "GameLogic::Engine3D_init()");
+    //TODO: load level
+    
 
     //load skybox
     Engine3D::inline_try<std::runtime_error>([&]
         {
             m_skybox.init(glm::vec3(0), "data/objects/inv_cube.obj");
-            m_skybox.scale() = glm::vec3(Engine3D::Game::FrustrumMax / sqrtf(3));
+            m_skybox.scale() = glm::vec3(this->DefaultFrustrumMax / sqrtf(3));
             m_skybox.setupVertexAttributes(m_skybox_shader);
         }, "GameLogic::Engine3D_init()");
-
-    //show fps text box
+        
+    //load level
     Engine3D::inline_try<std::runtime_error>([&]
         {
-            m_fps.init(*this, "data/fonts/GoodTimes.ttf", 25);
-        }, "GameLogic::Engine3D_init()");
+            const char* asteroids_models[] = {
+                "data/objects/rock.obj",
+                "data/objects/island.obj",
+                "data/objects/cube.obj"
+            };
 
-    Engine3D::inline_try<std::runtime_error>([&]
-        {
-            m_main_music.init("data/audio/abstract.ogg");
-            //m_main_music.play();
 
-            m_step_left_sound.init("data/audio/step_left.wav");
-            m_step_right_sound.init("data/audio/step_right.wav");
-            m_jump_sound.init("data/audio/jump.wav");
-            m_land_sound.init("data/audio/land_soft.wav");
-        }, "GameLogic::Engine3D_init()");
-
-    std::printf("GameLogic() log: constructing spatial partitions...\n");
-
-    //construct spatial partition
-    for (auto& object : m_objects)
-    {
-        if (object->hitbox() != Object::HitboxType::Mesh)
-        {
-            continue;
-        }
-
-        const std::vector<Engine3D::Vertex>* vertices = object->vertices();
-
-        if (vertices->size() != 0)
-        {
-            for (u32 i = 0; i < vertices->size(); i += 3)
+            for (Engine3D::u32 i = 0; i < 100; i++)
             {
-                m_triangles.push_back(object->constructTriangle(i));
+                u32 asteroids_model_index = u32(Engine3D::Random::uniform(0, sizeof(asteroids_models) / sizeof(asteroids_models[0])));
+                m_objects.push_back(new Asteroid(glm::vec3(  0 + Engine3D::Random::uniform(-100, 100), 
+                                                           -20 + Engine3D::Random::uniform(-100, 100), 
+                                                           -20 + Engine3D::Random::uniform(-10, 100)), glm::vec3(0), asteroids_models[asteroids_model_index]));
+                m_objects.back()->scale() = glm::vec3(2 + Engine3D::Random::uniform(0, 5));
+                m_objects.back()->hitbox() = Object::HitboxType::Mesh;
+m_objects.back()->setupVertexAttributes(m_obj_shader);
+m_objects.back()->col() = glm::vec3(Engine3D::Random::uniform(0.2, 0.6), Engine3D::Random::uniform(0.2, 0.4), Engine3D::Random::uniform(0.0, 0.05));
             }
+
+        }, "GameLogic::Engine3D_init()");
+
+        //show fps text box
+
+        Engine3D::inline_try<std::runtime_error>([&]
+            {
+                m_fps.init(*this, "data/fonts/GoodTimes.ttf", 25);
+            }, "GameLogic::Engine3D_init()");
+
+        Engine3D::inline_try<std::runtime_error>([&]
+            {
+                m_main_music.init("data/audio/abstract.ogg");
+                //m_main_music.play();
+
+                m_step_left_sound.init("data/audio/step_left.wav");
+                m_step_right_sound.init("data/audio/step_right.wav");
+                m_jump_sound.init("data/audio/jump.wav");
+                m_land_sound.init("data/audio/land_soft.wav");
+            }, "GameLogic::Engine3D_init()");
+
+        m_player = std::make_unique<Player>(m_obj_shader);
+        m_player->reset();
+
+        std::printf("GameLogic() log: constructing spatial partitions...\n");
+
+        //construct spatial partition
+
+        std::vector<Asteroid*> asteroids;
+
+        for (auto& object : m_objects)
+        {
+            if (object->hitbox() != Object::HitboxType::Mesh)
+            {
+                continue;
+            }
+
+            asteroids.push_back(reinterpret_cast<Asteroid*>(object));
         }
-    }
 
-    m_spatial_partition.update(m_triangles);
+        m_spatial_partition.update(asteroids);
 
-    std::printf("GameLogic() log: spatial partitions constructed\n");
+        std::printf("GameLogic() log: spatial partitions constructed\n");
+        std::printf("--------------------\n");
+        std::printf("Controls: W, A, S, D\n");
+        std::printf("Arrow Up, Arrow Down\n\n");
+        std::printf("Shooting: Space\n");
+        std::printf("--------------------\n");
 }
 
 void GameLogic::clean()
@@ -158,456 +173,180 @@ void GameLogic::clean()
 
     delete m_light;
 
+    for (auto& light : m_player_trail)
+    {
+        delete light;
+    }
+
     m_main_music.stop();
 }
 
 void GameLogic::update(const float time_delta)
 {
-    //TODO: somethims we just fall through the floor
-    //TODO: time delta movement is fucked
-
-    if(m_pause == false)
+    if (m_pause == false)
     {
-        //TODO: update time
         m_time += (float)fmod(1.0f * time_delta, M_PI * 2.0);
 
-        //save vertical movement for playing the right land sound
-        float player_prev_mov_y = m_player.mov().y;
-        bool  player_prev_on_ground = m_player.on_ground();
-
-        //apply gravity to the player
-        m_player.mov().y -= Player::Gravity;
-        m_player.mov().y  = std::clamp(m_player.mov().y, -Player::MaxVerticalSpeed, Player::MaxVerticalSpeed);
-
-        m_player.addPos(glm::vec3(0, m_player.mov().y * time_delta * time_delta, 0));
-
-        //reset on ground flag and update coyote jump
-        if (m_player.coyote_jump() <= 0.0f)
+        glm::vec3 dir;
+        if (glm::dot(m_player->mov(), m_player->mov()) == 0)
         {
-            m_player.on_ground()       = false;
-            m_player.on_ground_slope() = glm::vec3(0, 1, 0);
+            dir = glm::normalize(m_player->getDir());
         }
         else
         {
-            m_player.coyote_jump() -= 1.0f * time_delta;
+            dir = glm::normalize(m_player->mov());
         }
+        glm::vec3 rig = glm::cross(glm::vec3(0, 1, 0), m_player->mov());
+        glm::vec3 up = glm::cross(rig, m_player->mov());
 
-        //normalize player's forward direction
-        glm::vec2 player_dir = glm::normalize(glm::vec2(m_player.getDir().x, m_player.getDir().z));
-
-        //flags for to know when to slow down
-        bool player_move_straight = false;
-        bool player_move_sideways = false;
-
-        //move forward
         if (this->keyDown(Engine3D::Game::Key::W) && !this->keyDown(Engine3D::Game::Key::S))
         {
-            m_player.mov().z += player_dir.y * Player::Acceleration * time_delta;
-            m_player.mov().x += player_dir.x * Player::Acceleration * time_delta;
-            player_move_straight = true;
+            m_player->speed() += Player::Acceleration * time_delta;
+            //m_player->mov() += dir * Player::Acceleration * time_delta;
         }
 
-        //move backward
         if (this->keyDown(Engine3D::Game::Key::S) && !this->keyDown(Engine3D::Game::Key::W))
         {
-            m_player.mov().z -= player_dir.y * Player::Acceleration * time_delta;
-            m_player.mov().x -= player_dir.x * Player::Acceleration * time_delta;
-            player_move_straight = true;
+            m_player->speed() -= Player::Acceleration * time_delta;
+            if (m_player->speed() < 0)
+            {
+                m_player->speed() = 0;
+            }
+            //m_player->mov() -= dir * Player::Acceleration * time_delta;
         }
 
-        //get sideways vector
-        player_dir = glm::rotate(player_dir, static_cast<float>(M_PI_2));
+        m_player->mov() = dir * m_player->speed();
 
-        //move right
-        if (this->keyDown(Engine3D::Game::Key::D) && !this->keyDown(Engine3D::Game::Key::A))
-        {
-            m_player.mov().z -= player_dir.y * Player::Acceleration * time_delta;
-            m_player.mov().x -= player_dir.x * Player::Acceleration * time_delta;
-            player_move_sideways = true;
-        }
-
-        //move left
         if (this->keyDown(Engine3D::Game::Key::A) && !this->keyDown(Engine3D::Game::Key::D))
         {
-            m_player.mov().z += player_dir.y * Player::Acceleration * time_delta;
-            m_player.mov().x += player_dir.x * Player::Acceleration * time_delta;
-            player_move_sideways = true;
+            m_player->mov() = glm::rotate(m_player->mov(), -0.05f * time_delta, glm::vec3(0, 1, 0));
+            m_player->setDir(glm::rotate(m_player->getDir(), -0.05f * time_delta, glm::vec3(0, 1, 0)));
+            m_player->rotate(-0.05f * time_delta, glm::vec3(0, 1, 0));
         }
-        
-        //collision
 
-        for (u32 i = 0; i < m_objects.size(); i++)
+        if (this->keyDown(Engine3D::Game::Key::D) && !this->keyDown(Engine3D::Game::Key::A))
         {
-            Object* obj = m_objects[i];
-
-            if (obj->hitbox() == Object::HitboxType::Ball)
-            {
-                obj->mov() += glm::vec3(0, -0.01 * time_delta, 0);
-                obj->pos() += obj->mov() * time_delta;
-
-                
-                for (u32 j = 0; j < m_objects.size(); j++)
-                {
-                    if (j != i)
-                    {
-                        if (m_objects[j]->hitbox() == Object::HitboxType::Ball)
-                        {
-                            Engine3D::Collision::Data res = Engine3D::Collision::BallVsBall(obj->pos(), obj->scale().x / 2, m_objects[j]->pos(), m_objects[j]->scale().x / 2);
-
-                            if (res)
-                            {
-                                obj->pos() += res.displacement / 2.0f;
-                                obj->mov()  = glm::reflect(obj->mov(), glm::normalize(res.displacement)) * 0.9f;
-                                m_objects[j]->pos() -= res.displacement / 2.0f;
-                                m_objects[j]->mov()  = glm::reflect(m_objects[j]->mov(), glm::normalize(res.displacement)) * 0.9f;
-                            }
-                        }
-                    }
-                }
-
-                auto triangles = m_spatial_partition.get(obj->pos());
-
-                if (triangles)
-                {
-                    for (auto& triangle : *triangles)
-                    {
-                        Engine3D::Collision::Data collision = Engine3D::Collision::BallVsTriangle(obj->pos(), obj->scale().x / 2.0, triangle->p1, triangle->p2, triangle->p3);
-                        if (collision)
-                        {
-                            obj->pos() += collision.displacement;
-                            obj->mov()  = glm::reflect(obj->mov(), glm::normalize(collision.displacement));
-                        }
-                    }
-                }
-            }
+            m_player->mov() = glm::rotate(m_player->mov(), +0.05f * time_delta, glm::vec3(0, 1, 0));
+            m_player->setDir(glm::rotate(m_player->getDir(), +0.05f * time_delta, glm::vec3(0, 1, 0)));
+            m_player->rotate(+0.05f * time_delta, glm::vec3(0, 1, 0));
         }
 
+        if (this->keyDown(Engine3D::Game::Key::UP) && !this->keyDown(Engine3D::Game::Key::DOWN))
+        {
+            m_player->pos() += glm::vec3(0, 0.1f, 0) * time_delta;
+        }
+        if (this->keyDown(Engine3D::Game::Key::DOWN) && !this->keyDown(Engine3D::Game::Key::UP))
+        {
+            m_player->pos() -= glm::vec3(0, 0.1f, 0) * time_delta;
+        }
+
+        if (m_player->gun_reload() > 0)
+        {
+            m_player->gun_reload() -= 1 * time_delta;
+        }
+        if (this->keyDown(Engine3D::Game::Key::SPACE) && m_player->gun_reload() <= 0)
+        {
+            m_objects.push_back(new Bullet(m_player->pos(), m_player->getDir()));
+            m_objects.back()->setupVertexAttributes(m_obj_shader);
+            m_player->gun_reload() = Player::DefaultReload;
+        }
+
+        m_player->pos() += m_player->mov() * time_delta;
+        
         glm::vec3 collision_result(0);
 
         //perform collision with static objects
-        auto triangles = m_spatial_partition.get(m_player.getPos());
 
-        if (triangles != nullptr)
+        auto asteroids = m_spatial_partition.get(m_player->pos());
+
+        if (asteroids != nullptr)
         {
-            for (auto& triangle : *triangles)
+            for (auto& asteroid : *asteroids)
             {
-                glm::vec3 collision = Engine3D::Collision::EllipsoidVsTriangle(m_player.getPos(), m_player.dims(), triangle->p1, triangle->p2, triangle->p3).displacement;
-                m_player.addPos(collision);
-                collision_result += collision;
+                auto triangles = asteroid->triangles();
+
+                for (auto& triangle : triangles)
+                {
+                    Engine3D::Collision::Data collision = Engine3D::Collision::EllipsoidVsTriangle(m_player->pos(), m_player->dims(), triangle.p1, triangle.p2, triangle.p3);
+                    m_player->pos() += collision.displacement;
+                    collision_result += collision.displacement;
+                }
             }
         }
 
-        for (auto& object : m_objects)
+        if (m_objects_to_insert.size() != 0)
         {
-            glm::vec3 collision(0);
-
-            switch (object->hitbox())
-            {
-                //Box vs Box
-                case Object::HitboxType::Box:
-                {
-                    Engine3D::Collision::Data collision_data = Engine3D::Collision::BoxVsBox(m_player.getPos(), m_player.dims(), object->pos(), object->dims());
-                    if (collision_data.occurred)
-                    {
-                        collision = collision_data.displacement;
-                    }
-                    break;
-                }
-                //Cylinder vs Cylinder
-                case Object::HitboxType::Cylinder:
-                {
-                    Engine3D::Collision::Data collision_data = Engine3D::Collision::CylinderVsCylinder(m_player.getPos(), glm::vec2(m_player.dims().x / 2, m_player.dims().y), object->pos(), glm::vec2(object->dims().x / 2, object->dims().y));
-                    if (collision_data.occurred)
-                    {
-                        collision = collision_data.displacement;
-                    }
-                    break;
-                }
-                //Ball vs Ball
-                case Object::HitboxType::Ball:
-                {
-                    Engine3D::Collision::Data collision_data = Engine3D::Collision::BallVsBall(m_player.getPos(), m_player.dims().y / 2, object->pos(), object->dims().y / 2);
-                    if (collision_data.occurred)
-                    {
-                        collision = collision_data.displacement;
-                    }
-                    break;
-                }
-                //Ball vs Triangles
-                case Object::HitboxType::Mesh:
-                case Object::HitboxType::None:
-                default:
-                {
-                    break;
-                }
-            }
-
-            if (collision != glm::vec3(0))
-            {
-                if (object->collision_trigger())
-                {
-                    std::invoke(object->collision_trigger());
-                }
-
-                if (object->has_collision_response())
-                {
-                    m_player.addPos(collision);
-                    collision_result += collision;
-                }
-            }
+            m_objects.insert(m_objects.end(), m_objects_to_insert.begin(), m_objects_to_insert.end());
         }
+        m_objects_to_insert.clear();
+
+        for (auto object : m_objects)
+        {
+            if (object->destroy_flag())
+            {
+                continue;
+            }
+
+            object->update(this, time_delta);
+        }
+
+        //remove objects whom requested it
+        m_objects.erase(std::partition(m_objects.begin(), m_objects.end(), [](const auto& obj)
+            {
+                if (obj->destroy_flag())
+                {
+                    delete obj;
+                    return false;
+                }
+                return true;
+            }), m_objects.end());
+            
         
-        //if there was a collision, adjust player flags and player movement
-        if (collision_result != glm::vec3(0))
-        {
-            glm::vec3 normalized_res = glm::normalize(collision_result);
-
-            //check if the slope is flat enough
-            if (collision_result.y > 0.0f)
-            {
-                if(glm::angle(normalized_res, glm::vec3(0, 1, 0)) < ENGINE3D_DEGTORAD(45.0f / m_player.dims().y))
-                {
-                    //set "jump" and "on ground" flags
-                    m_player.mov().y           = 0.0f;
-                    m_player.on_ground()       = true;
-                    m_player.on_ground_slope() = normalized_res;
-                    m_player.can_jump()        = true;
-                    m_player.coyote_jump()     = Player::CoyoteJumpDefault;
-
-                    if (normalized_res != glm::vec3(0, 1, 0))
-                    {
-                        //manipulate collision result, so we are not sliding down from almost flat slopes
-                        float angle = glm::angle(collision_result, glm::vec3(0, 1, 0));
-
-                        if (angle != 0.0f)
-                        {
-                            float cotangent = 1.0f / tanf(angle);
-                            cotangent = cotangent * glm::length(collision_result);
-                            m_player.addPos(glm::vec3(0, cotangent, 0) - collision_result);
-                        }
-                    }
-                }
-            }
-
-            auto is_valid = [](glm::vec3& vector)
-            {
-                return !(isnan(vector.x) || isnan(vector.y) || isnan(vector.z) || isinf(vector.x) || isinf(vector.y) || isinf(vector.z));
-            };
-
-            //modify players movement
-            glm::vec3 new_dir = glm::cross(collision_result, m_player.mov());
-            new_dir = glm::cross(new_dir, collision_result);
-            new_dir = -glm::normalize(new_dir);
-            if (is_valid(new_dir))
-            {
-                m_player.mov() = new_dir * glm::dot(new_dir, m_player.mov());
-                m_player.addPos(m_player.mov() * time_delta);
-            }
-            else
-            {
-                m_player.mov() = glm::vec3(0);
-            }
-        }
-        else
-        {
-            //apply movement force
-            m_player.addPos(glm::vec3(m_player.mov().x * time_delta, 0, m_player.mov().z * time_delta));
-        }        
-
-        //add landing bob
-        if (player_prev_on_ground == false && m_player.on_ground() == true &&
-            player_prev_mov_y < Player::LandBobThreshold)
-        {
-            m_player.land_bob() = Player::LandBob;
-            m_land_sound.play();
-        }
-
-        //jump
-        static bool jump_down = false;
-        if(this->keyDown(Engine3D::Game::Key::SPACE) && !jump_down)
-        {
-            if (m_player.can_jump())
-            {
-                m_player.coyote_jump() = 0;
-                m_player.can_jump()    = false;
-
-                if (m_player.on_ground())
-                {
-                    m_player.mov() += m_player.on_ground_slope() * Player::JumpPower / time_delta;
-                }
-
-                m_jump_sound.play();
-            }
-        }
-
-        //slowing down the player
-        if (m_player.on_ground())
-        {
-            if (!player_move_sideways && !player_move_straight)
-            {
-                m_player.mov().z -= m_player.mov().z * Player::Decceleration * time_delta; if(fabs(m_player.mov().z) < 0.001f) { m_player.mov().z = 0; }
-                m_player.mov().x -= m_player.mov().x * Player::Decceleration * time_delta; if(fabs(m_player.mov().x) < 0.001f) { m_player.mov().x = 0; }
-            }
-        }
-
-        //clamping horizontal speed
-        if (std::sqrt(m_player.mov().x * m_player.mov().x + m_player.mov().z * m_player.mov().z) > Player::MaxHorizontalSpeed)
-        {
-            player_dir = glm::normalize(glm::vec2(m_player.mov().x, m_player.mov().z));
-            m_player.mov().x = player_dir.x * Player::MaxHorizontalSpeed;
-            m_player.mov().z = player_dir.y * Player::MaxHorizontalSpeed;
-        }
-
-        glm::vec2 mouse_delta = this->getMouseDelta() * time_delta;
-
-        //rotate camera around y axis
-        m_player.getCam().rotate(glm::vec3(0, 1, 0), mouse_delta.x / 100.0f);
+        static u32 cicler = 0;
 
         //rotate camera around its right vector + gimbal lock the rotation to only 180 deg
-        //TODO: if window loses focus and regains it back, it can lock the camera in the 90 or -90 degrees
-        glm::vec3 cam_dir_right = glm::cross(glm::vec3(0, 1, 0), m_player.getCam().getDir());
-        glm::vec3 old_cam_dir   = glm::normalize(glm::vec3(m_player.getCam().getDir().x, 0, m_player.getCam().getDir().z));
-        glm::vec3 new_cam_dir   = glm::rotate(m_player.getCam().getDir(), mouse_delta.y / 100.0f, cam_dir_right);
-
-        float angle_delta = glm::angle(old_cam_dir, new_cam_dir) * 180.0f / static_cast<float>(M_PI);
-
-        if (m_player.getCam().getDir().y != 0)
+        if (glm::dot(m_player->mov(), m_player->mov()) == 0)
         {
-            angle_delta *= -m_player.getCam().getDir().y / fabs(m_player.getCam().getDir().y);
+            glm::vec3 dir = glm::normalize(m_player->getDir());
+            m_player->getCam().setDir(dir);
+            m_player->getCam().setPos(m_player->pos() - (dir * 2.0f) + glm::vec3(0, 1, 0));
+            m_light->pos() = m_player->pos() - (dir / 2.0f);
+            m_player_trail[cicler]->pos() = m_player->pos() - (dir / 2.0f);
 
-            if (angle_delta >= 89.0f)
-            {
-                m_player.getCam().setDir(glm::rotate(old_cam_dir, static_cast<float>(89.0f * M_PI / 180.0f), cam_dir_right));
-            }
-            else if (angle_delta <= -89.0f)
-            {
-                m_player.getCam().setDir(glm::rotate(old_cam_dir, static_cast<float>(-89.0f * M_PI / 180.0f), cam_dir_right));
-            }
-            else
-            {
-                m_player.getCam().rotate(cam_dir_right, mouse_delta.y / 100.0f);
-            }
         }
         else
         {
-            m_player.getCam().rotate(cam_dir_right, mouse_delta.y / 100.0f);
+            glm::vec3 dir = glm::normalize(m_player->mov());
+            m_player->getCam().setDir(dir);
+            m_player->getCam().setPos(m_player->pos() - (dir * 2.0f) + glm::vec3(0, 1, 0));
+            m_light->pos() = m_player->pos() - (dir / 2.0f);
+            m_player_trail[cicler]->pos() = m_player->pos() - (dir / 2.0f);
         }
         
-        //apply bobbing effect when running
-        m_player.bobbing() = fabs(sinf(m_time * 0.01f * 20.0f)) * sqrtf(powf(m_player.mov().z, 2.0f) + powf(m_player.mov().x, 2.0f)) * 1.5f * m_player.on_ground();
-
-        //smooth out landing bob
-        m_player.land_bob() -= m_player.land_bob() / 20.0f * time_delta;
-
-        //play step sound
-        if (fabs(m_player.mov().x) > 0.05f || fabs(m_player.mov().z) > 0.05f)
-        {
-            if (m_player.on_ground())
-            {
-                if ((sinf(m_time * 0.01f * 20.0f) <= 0.0f && sinf((m_time - 1) * 0.01f * 20.0f) >= 0.0f) ||
-                    (sinf(m_time * 0.01f * 20.0f) >= 0.0f && sinf((m_time - 1) * 0.01f * 20.0f) <= 0.0f))
-                {
-                    if (m_player.step())
-                    {
-                        m_step_left_sound.play();
-                    }
-                    else
-                    {
-                        m_step_right_sound.play();
-                    }
-                    m_player.step() = !m_player.step();
-                }
-            }
-        }
 
         //set fov based on how fast are we moving
-        m_player.getCam().setFov(m_player.getCam().getFov() + (100.0f + (sqrt(pow(m_player.mov().x, 2.0f) + pow(m_player.mov().z, 2.0f)) * 50.0f) - m_player.getCam().getFov()) / 10.0f);
-    
+        m_player->getCam().setFov(m_player->getCam().getFov() + (100.0f + (sqrt(pow(m_player->mov().x, 2.0f) + pow(m_player->mov().z, 2.0f)) * 50.0f) - m_player->getCam().getFov()) / 10.0f);
+
+        cicler = (cicler + 1) % m_player_trail.size();
+
         //update skybox position
-        m_skybox.pos() = m_player.getPos();
+        m_skybox.pos() = m_player->pos();
     }
+}
 
-    m_light->pos() = glm::vec3(sinf(m_time / 100.0f) * 10.0f, -20.0f + sinf(m_time / 200.0f) * 10.0f, cosf(m_time / 100.0f) * 10.0f);
-
+void GameLogic::draw()
+{
     
-
-    this->drawBegin3D(m_player.getCam());
-
+    this->drawBegin3D(m_player->getCam());
     
-    //TODO: remove drawing hitboxes
-    auto draw_hitbox = [](const glm::vec3& pos, const glm::vec3& dims)
-    {
-        glBegin(GL_LINES);
-        glVertex3f(pos.x + dims.x / 2, pos.y + dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x + dims.x / 2, pos.y - dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x + dims.x / 2, pos.y + dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x - dims.x / 2, pos.y + dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x + dims.x / 2, pos.y + dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x + dims.x / 2, pos.y + dims.y / 2, pos.z - dims.z / 2);
-
-        glVertex3f(pos.x - dims.x / 2, pos.y + dims.y / 2, pos.z - dims.z / 2);
-        glVertex3f(pos.x - dims.x / 2, pos.y - dims.y / 2, pos.z - dims.z / 2);
-        glVertex3f(pos.x + dims.x / 2, pos.y - dims.y / 2, pos.z - dims.z / 2);
-        glVertex3f(pos.x - dims.x / 2, pos.y - dims.y / 2, pos.z - dims.z / 2);
-        glVertex3f(pos.x - dims.x / 2, pos.y - dims.y / 2, pos.z + dims.z / 2);
-        glVertex3f(pos.x - dims.x / 2, pos.y - dims.y / 2, pos.z - dims.z / 2);
-        glEnd();
-    };
-    auto draw_hitboxes = [&]()
-    {
-        glBegin(GL_LINES);
-        glColor3f(1, 0, 0);
-        glVertex3f(-1, 0, 0);
-        glVertex3f(1, 0, 0);
-        glColor3f(0, 1, 0);
-        glVertex3f(0, -1, 0);
-        glVertex3f(0, 1, 0);
-        glColor3f(0, 0, 1);
-        glVertex3f(0, 0, -1);
-        glVertex3f(0, 0, 1);
-        glColor3f(1, 1, 1);
-        glEnd();
-        
-        draw_hitbox(m_player.getPos(), m_player.dims());
-        for (auto& object : m_objects)
-        {
-            Engine3D::Box bounding_box = object->boundingBox();
-            draw_hitbox(bounding_box.pos, bounding_box.dims);
-        }
-
-        auto triangles = m_spatial_partition.get(m_player.getPos());
-
-        if (triangles != nullptr)
-        {
-            for (auto& triangle : *triangles)
-            {
-                glBegin(GL_LINES);
-                glVertex3f(triangle->p1.x, triangle->p1.y, triangle->p1.z);
-                glVertex3f(triangle->p2.x, triangle->p2.y, triangle->p2.z);
-                glVertex3f(triangle->p1.x, triangle->p1.y, triangle->p1.z);
-                glVertex3f(triangle->p3.x, triangle->p3.y, triangle->p3.z);
-                glVertex3f(triangle->p3.x, triangle->p3.y, triangle->p3.z);
-                glVertex3f(triangle->p2.x, triangle->p2.y, triangle->p2.z);
-                glEnd();
-            }
-        }
-
-        Engine3D::BoundingBox cell_rect = m_spatial_partition.getCell(m_player.getPos());
-        glColor3f(1, 0, 0);
-        draw_hitbox(cell_rect.min + (cell_rect.max - cell_rect.min) / 2.0f, glm::vec3((float)m_spatial_partition.getCellSize()));
-        glColor3f(1, 1, 1);
-    };
-    
-    draw_hitboxes();
-
     //draw skybox
     m_skybox_shader.use();
 
-    m_skybox_shader.setTextureCubemap(m_skybox_texture.getID(),    "skybox_texture");
-    m_skybox_shader.setTexture2D(m_skybox_noise.getID(),           "noise_texture");
-    m_skybox_shader.set4x4m(m_player.getCam().getRotationMatrix(), "rotation_matrix");
-    m_skybox_shader.set3f(glm::vec3(0.5, 0.5, 1),                  "color");
-    m_skybox_shader.set1f(m_time / 100.0f,                         "time");
+    m_skybox_shader.setTextureCubemap(m_skybox_texture.getID(), "skybox_texture");
+    m_skybox_shader.setTexture2D(m_skybox_noise.getID(), "noise_texture");
+    m_skybox_shader.set4x4m(m_player->getCam().getRotationMatrix(), "rotation_matrix");
+    m_skybox_shader.set3f(glm::vec3(0.5, 0.5, 1), "color");
+    m_skybox_shader.set1f(m_time / 100.0f, "time");
 
     m_skybox.draw();
 
@@ -615,12 +354,12 @@ void GameLogic::update(const float time_delta)
 
     //draw static object
 
-    for(auto& object : m_objects)
+    for (auto& object : m_objects)
     {
         m_obj_shader.use();
 
         m_obj_shader.setTextureCubemap(m_skybox_texture.getID(), "skybox");
-    
+
         const Engine3D::Material* material = object->material();
 
         if (material != nullptr)
@@ -655,9 +394,9 @@ void GameLogic::update(const float time_delta)
         m_obj_shader.set1f(4, "material_shininess");
         m_obj_shader.set2f(this->getDims(), "dims");
         m_obj_shader.set1f(1, "reflection_strength");
-        m_obj_shader.set3f(m_light->pos()/*m_player.getPos()*/, "light_pos");
-        m_obj_shader.set4x4m(m_player.getCam().getRotationMatrix(), "rot_mat");
-        m_obj_shader.set4x4m(m_player.getCam().getViewMatrix(), "view_mat");
+        m_obj_shader.set3f(m_light->pos(), "light_pos");
+        m_obj_shader.set4x4m(m_player->getCam().getRotationMatrix(), "rot_mat");
+        m_obj_shader.set4x4m(m_player->getCam().getViewMatrix(), "view_mat");
         m_obj_shader.set1f(m_time / 100.0f, "time");
         m_obj_shader.set3f(object->pos(), "obj_pos");
 
@@ -666,29 +405,74 @@ void GameLogic::update(const float time_delta)
         m_obj_shader.unuse();
     }
 
+    m_obj_shader.use();
+
+    m_obj_shader.setTextureCubemap(m_skybox_texture.getID(), "skybox");
+
+    const Engine3D::Material* material = m_player->material();
+
+    if (material != nullptr)
+    {
+        if (const_cast<Engine3D::Material*>(material)->diffuse_mapping_texture.empty() == false)
+        {
+            m_obj_shader.setTexture2D(const_cast<Engine3D::Material*>(m_player->material())->diffuse_mapping_texture.getID(), "uv_map");
+            m_obj_shader.set1b(true, "has_uv_map");
+        }
+        else
+        {
+            m_obj_shader.setTexture2D(m_skybox_noise.getID(), "uv_map");
+            m_obj_shader.set1b(false, "has_uv_map");
+        }
+
+        m_obj_shader.set3f(m_player->material()->ambient * m_player->col(), "material_ambient");
+        m_obj_shader.set3f(m_player->material()->diffuse * m_player->col(), "material_diffuse");
+        m_obj_shader.set3f(m_player->material()->specular * m_player->col(), "material_specular");
+    }
+    else
+    {
+        m_obj_shader.set3f(DefaultAmbientColor, "material_ambient");
+        m_obj_shader.set3f(DefaultDiffuseColor, "material_diffuse");
+        m_obj_shader.set3f(DefaultSpecularColor, "material_specular");
+        m_obj_shader.setTexture2D(m_skybox_noise.getID(), "uv_map");
+        m_obj_shader.set1b(false, "has_uv_map");
+    }
+
+    m_obj_shader.set3f(m_light->ambient_color(), "light_ambient");
+    m_obj_shader.set3f(m_light->diffuse_color(), "light_diffuse");
+    m_obj_shader.set3f(m_light->specular_color(), "light_specular");
+    m_obj_shader.set1f(4, "material_shininess");
+    m_obj_shader.set2f(this->getDims(), "dims");
+    m_obj_shader.set1f(1, "reflection_strength");
+    m_obj_shader.set3f(m_light->pos(), "light_pos");
+    m_obj_shader.set4x4m(m_player->getCam().getRotationMatrix(), "rot_mat");
+    m_obj_shader.set4x4m(m_player->getCam().getViewMatrix(), "view_mat");
+    m_obj_shader.set1f(m_time / 100.0f, "time");
+    m_obj_shader.set3f(m_player->pos(), "obj_pos");
+
+    m_player->draw();
+
+    m_obj_shader.unuse();
+
     m_image_shader.use();
     m_image_shader.setTexture2D(m_light->texture().getID(), "image");
     m_image_shader.set3f(m_light->diffuse_color(), "color");
 
-    m_light->draw(m_player.getCam());
+    m_light->draw(m_player->getCam());
+    for (auto& light : m_player_trail)
+    {
+        light->draw(m_player->getCam());
+    }
 
     m_image_shader.unuse();
-    
+
     //apply post processing to the final fbo draw
     //m_post_outline_shader.use();
     //m_post_outline_shader.set2f(this->getDims(), "dims");
     //m_post_outline_shader.set3f(glm::vec3(-1, -1, -1), "edge_color");
     
-    this->drawEnd3D(m_player.getCam());
-    
+    this->drawEnd3D(m_player->getCam());
+
     //m_post_outline_shader.unuse();
-    
-    //draw fps
-    /*
-    m_fps = std::to_string(static_cast<u32>(this->getFPS())) + " FPS";
-    m_fps.pos() = glm::vec2(-this->getDims().x + m_fps.getDims().x / 2.0f, this->getDims().y - m_fps.getDims().y / 2.0f);
-    m_fps.draw();
-    */
 }
 
 void GameLogic::click()
@@ -703,4 +487,16 @@ void GameLogic::click()
         vsync = Engine3D::Game::VSync::On;
     }
     this->setVSync(vsync);
+}
+
+void GameLogic::spawn_explosion(const glm::vec3& pos)
+{
+    for (u32 i = 0; i < 30; i++)
+    {
+        m_objects_to_insert.push_back(new Particle(pos, glm::vec3(
+            Engine3D::Random::uniform(-1, 1),
+            Engine3D::Random::uniform(-1, 1),
+            Engine3D::Random::uniform(-1, 1)
+        )));
+    }
 }

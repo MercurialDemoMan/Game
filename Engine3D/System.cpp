@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "System.hpp"
 
 #include <random>
@@ -7,9 +23,6 @@ namespace Engine3D
     namespace System
     {
         std::string m_executable_path;   // full executable path
-        
-        std::random_device m_random_dev; // random device
-        std::mt19937       m_random_gen; // random generator
         
         /**
          * initialize system module
@@ -27,9 +40,6 @@ namespace Engine3D
             #else
                 m_executable_path += '/';
             #endif
-            
-            // initialize random number generator
-            m_random_gen = std::mt19937(m_random_dev());
         }
         
         /**
@@ -42,46 +52,6 @@ namespace Engine3D
         std::string getFullPath(const char* path)
         {
             return m_executable_path + path;
-        }
-        
-        /**
-         * random number generator
-         */
-        float random() 
-        {
-            static std::uniform_real_distribution<float> random_dist(0.0f, 1.0f);
-            
-            return random_dist(m_random_gen);
-        }
-        float random(float max)
-        {
-            std::uniform_real_distribution<float> random_dist;
-            
-            if(max < 0.0f)
-            {
-                random_dist = std::uniform_real_distribution<float>(max, 0.0f);
-            }
-            else
-            {
-                random_dist = std::uniform_real_distribution<float>(0.0, max);
-            }
-            
-            return random_dist(m_random_gen);
-        }
-        float random(float min, float max)
-        {
-            std::uniform_real_distribution<float> random_dist;
-            
-            if(min < max)
-            {
-                random_dist = std::uniform_real_distribution<float>(min, max);
-            }
-            else
-            {
-                random_dist = std::uniform_real_distribution<float>(max, min);
-            }
-            
-            return random_dist(m_random_gen);
         }
     };
 };

@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 
 #include <glm/glm.hpp>
@@ -29,15 +45,12 @@ namespace Engine3D
         /**
          * setters
          */
-        void setPos(glm::vec3& pos)  { m_rot_needs_update = m_view_needs_update = true; m_pos = pos; }
-        void setPos(glm::vec3&& pos) { m_rot_needs_update = m_view_needs_update = true; m_pos = pos; }
-        void setX(float x)           { m_rot_needs_update = m_view_needs_update = true; m_pos.x = x; }
-        void setY(float y)           { m_rot_needs_update = m_view_needs_update = true; m_pos.y = y; }
-        void setZ(float z)           { m_rot_needs_update = m_view_needs_update = true; m_pos.z = z; }
-        void addPos(glm::vec3& pos)  { m_rot_needs_update = m_view_needs_update = true; m_pos += pos; }
-        void addPos(glm::vec3&& pos) { m_rot_needs_update = m_view_needs_update = true; m_pos += pos; }
-        void setDir(glm::vec3& dir)  { m_rot_needs_update = m_view_needs_update = true; m_dir = glm::normalize(dir); }
-        void setDir(glm::vec3&& dir) { m_rot_needs_update = m_view_needs_update = true; m_dir = glm::normalize(dir); }
+        void setPos(const glm::vec3& pos)  { m_rot_needs_update = m_view_needs_update = true; m_pos = pos; }
+        void setX(float x)                 { m_rot_needs_update = m_view_needs_update = true; m_pos.x = x; }
+        void setY(float y)                 { m_rot_needs_update = m_view_needs_update = true; m_pos.y = y; }
+        void setZ(float z)                 { m_rot_needs_update = m_view_needs_update = true; m_pos.z = z; }
+        void addPos(const glm::vec3& pos)  { m_rot_needs_update = m_view_needs_update = true; m_pos += pos; }
+        void setDir(const glm::vec3& dir)  { m_rot_needs_update = m_view_needs_update = true; m_dir = glm::normalize(dir); }
 
         /**
          * rotate the camera around a axis

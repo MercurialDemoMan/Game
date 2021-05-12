@@ -20,7 +20,10 @@ Game/GameLogic.cpp
 Game/Level.cpp 
 Game/Light.cpp 
 Game/Object.cpp 
-Game/Player.cpp)
+Game/Player.cpp
+Game/Asteroid.cpp
+Game/Particle.cpp
+Game/Bullet.cpp)
 
 add_library(Engine3D STATIC
 Engine3D/BillboardObject.cpp
@@ -44,7 +47,8 @@ Engine3D/Sprite.cpp
 Engine3D/System.cpp
 Engine3D/Text.cpp
 Engine3D/Texture.cpp
-Engine3D/Random.cpp)
+Engine3D/Random.cpp
+Engine3D/TimeInterval.cpp)
 
 target_include_directories(Game PUBLIC ${CMAKE_SOURCE_DIR})
 

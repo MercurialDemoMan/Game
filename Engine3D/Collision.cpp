@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "Collision.hpp"
 
 #include <algorithm>
@@ -10,6 +26,11 @@ namespace Engine3D
 {
     namespace Collision
     {
+        /**
+         * calculate barycentric coordinates
+         *
+         * source: Christer Ericson - Real-Time Collision Detection
+         */
     	static glm::vec3 barycentric(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& p)
         {
             glm::vec3 d0 = b - a;
@@ -1106,6 +1127,11 @@ namespace Engine3D
         {
             return TriangleVsTriangle(t1.p1, t1.p2, t1.p3, t2.p1, t2.p2, t2.p3);
         }
+        /**
+         * calculates minimal vector between two lines 
+         * 
+         * source: Christer Ericson - Real-Time Collision Detection
+         */
         Ray LineVsLineMin(const glm::vec3& l1_p1, const glm::vec3& l1_p2, const glm::vec3& l2_p1, const glm::vec3& l2_p2)
         {
             glm::vec3 delta    = l1_p1 - l2_p1;
@@ -1588,7 +1614,7 @@ namespace Engine3D
                                      {
                                          const std::vector<u32>& partial_division1 = m1->getDivision(x1, y1, z1);
                                          const std::vector<u32>& partial_division2 = m2->getDivision(x2, y2, z2);
-                                     
+                                      
                                          return res;
 
                                          for (u32 i = 0; i < partial_division1.size(); i++)

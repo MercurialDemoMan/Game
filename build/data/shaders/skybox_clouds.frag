@@ -52,4 +52,5 @@ void main() {
     vec3 surf2view = normalize(position); surf2view = vec3(rotation_matrix * vec4(surf2view, 0.0));
     
     gl_FragColor = vec4(cubemap(surf2view, vec3(.3,.9,.6), vec3(.5,.25,.9)), 1.0) + texture2D(noise_texture, hash22(surf2view.xz * time)) / 16.0;
+    gl_FragColor.rgb *= 0.85;
 }

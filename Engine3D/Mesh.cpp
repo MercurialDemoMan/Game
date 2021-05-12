@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "Mesh.hpp"
 
 #include <unordered_map>
@@ -45,7 +61,7 @@ namespace Engine3D
             glm::vec3 center;
 
             glm::vec3 mesh_max = glm::vec3(-std::numeric_limits<float>::infinity());
-            glm::vec3 mesh_min = glm::vec3(std::numeric_limits<float>::infinity());
+            glm::vec3 mesh_min = glm::vec3( std::numeric_limits<float>::infinity());
             //find the center of the model
             for (auto& vertex : vertices)
             {
@@ -325,9 +341,9 @@ namespace Engine3D
         {
             glm::vec3 translated_pos = (vertices[i].pos + 1.0f) / 2.0f;
 
-            u32 x = translated_pos.x * DivisionFactor; if (x == DivisionFactor) { x = DivisionFactor - 1; }
-            u32 y = translated_pos.y * DivisionFactor; if (y == DivisionFactor) { y = DivisionFactor - 1; }
-            u32 z = translated_pos.z * DivisionFactor; if (z == DivisionFactor) { z = DivisionFactor - 1; }
+            u32 x = static_cast<u32>(translated_pos.x * DivisionFactor); if (x == DivisionFactor) { x = DivisionFactor - 1; }
+            u32 y = static_cast<u32>(translated_pos.y * DivisionFactor); if (y == DivisionFactor) { y = DivisionFactor - 1; }
+            u32 z = static_cast<u32>(translated_pos.z * DivisionFactor); if (z == DivisionFactor) { z = DivisionFactor - 1; }
 
             result.partitions[x + DivisionFactor * (y + DivisionFactor * z)].push_back(i);
         }
@@ -379,6 +395,11 @@ namespace Engine3D
      */
     Cache<Vertices> g_vertices_cache(meshCacheLoadingFunction, meshCacheClearFunction);
     
+    std::vector<Vertex> simplify(Vertices& v, u32 level)
+    {
+        return {};
+    }
+
     /**
      * destructor
      */

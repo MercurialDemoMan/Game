@@ -1,8 +1,25 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 
 #include <unordered_map>
 #include <functional>
 #include <stdexcept>
+#include <cstring>
 
 #include "Types.hpp"
 #include "File.hpp"
@@ -33,6 +50,11 @@ namespace Engine3D
         const T* get(const std::string& id)  { return get(id.c_str()); }
         const T* get(const char* id)
         {
+            if (!std::strcmp(id, ""))
+            {
+                return nullptr;
+            }
+
             auto it = m_implementation.find(id);
 
             // object not in cache
@@ -61,7 +83,7 @@ namespace Engine3D
                     throw std::runtime_error("Cache::get() loading function not specified");
                 }
 
-                throw std::runtime_error("Cache::get() this shouldnÅLt be thrown\n");
+                throw std::runtime_error("Cache::get() this shouldn¬ÅLt be thrown\n");
 
                 //never reached
                 return nullptr;
@@ -88,6 +110,11 @@ namespace Engine3D
         const T* peek(const std::string& id)  { return peek(id.c_str()); }
         const T* peek(const char* id)
         {
+            if (!std::strcmp(id, ""))
+            {
+                return nullptr;
+            }
+
             auto it = m_implementation.find(id);
 
             // object not in cache
@@ -109,6 +136,11 @@ namespace Engine3D
         void del(const std::string& id)  { return del(id.c_str()); }
         void del(const char* id)
         {
+            if (!std::strcmp(id, ""))
+            {
+                return;
+            }
+
             auto it = m_implementation.find(id);
 
             if (it == m_implementation.end())

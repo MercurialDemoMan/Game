@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "Texture.hpp"
 
 #include "Macros.hpp"
@@ -75,15 +91,23 @@ namespace Engine3D
     /**
      * load texture into memory
      */
-    void Texture::init(const std::string&& id)
+    void Texture::init(const char* id)
     {
+        if (id == nullptr)
+        {
+            return;
+        }
+
         m_texture_id = id;
-        g_texture_cache.add(id);
-    }
-    void Texture::init(const std::string& id)
-    {
-        m_texture_id = id;
-        g_texture_cache.add(id);
+
+        try
+        {
+            g_texture_cache.add(id);
+        }
+        catch (std::runtime_error& e)
+        {
+            std::printf("Texture::init() error: %s - %s\n", e.what(), id);
+        }
     }
     
     /**
@@ -99,7 +123,7 @@ namespace Engine3D
      */
     bool Texture::empty()
     {
-        if (m_texture_id.size() == 0)
+        if (m_texture_id.empty())
         {
             return true;
         }
@@ -124,6 +148,11 @@ namespace Engine3D
      */
     u32 Texture::getID()
     {
+        if (m_texture_id.empty())
+        {
+            return -1;
+        }
+
         const InternalTexture* tex = g_texture_cache.peek(m_texture_id);
 
         if (!tex)
@@ -139,6 +168,11 @@ namespace Engine3D
      */
     glm::vec2 Texture::getDims()
     {
+        if (m_texture_id.empty())
+        {
+            return glm::vec2(0);
+        }
+
         const InternalTexture* tex = g_texture_cache.peek(m_texture_id);
 
         if (!tex)

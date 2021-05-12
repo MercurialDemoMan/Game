@@ -15,7 +15,7 @@ namespace Engine3D
         {
             return;
         }
-
+        
         glPushMatrix();
 
         glTranslatef(m_pos.x, m_pos.y, m_pos.z);

@@ -1,3 +1,19 @@
+/*
+This file is part of Engine3D.
+
+Engine3D is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Engine3D is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Engine3D.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 
 #include <optional>
@@ -43,6 +59,7 @@ namespace Engine3D
          * access attributes
          */
         glm::vec3& pos()            { return m_pos; }
+        const glm::vec3& get_pos() const { return m_pos; }
         glm::mat4& rot()            { return m_rot; }
         glm::mat4& rotate(float angle, glm::vec3 normal)
         {
@@ -73,10 +90,28 @@ namespace Engine3D
         	return m_rot;
         }
         glm::vec3& dims()           { return m_dims; }
+        const glm::vec3& get_dims() const { return m_dims; }
         glm::vec3& scale()          { return m_scale; }
+        const glm::vec3& get_scale() const { return m_scale; }
         const Material* material()  { return m_mesh.material(); }
         
         const std::vector<Engine3D::Vertex>* vertices() { return m_mesh.vertices(); }
+
+        std::vector<Engine3D::Triangle> triangles()
+        {
+            std::vector<Engine3D::Triangle> triangles{};
+            const std::vector<Engine3D::Vertex>* vertices = this->vertices();
+            if (vertices->size() != 0)
+            {
+                for (Engine3D::u32 i = 0; i < vertices->size(); i += 3)
+                {
+                    triangles.push_back(this->constructTriangle(i));
+                }
+            }
+
+            return triangles;
+        }
+        
 
         /**
          * get bounding box
